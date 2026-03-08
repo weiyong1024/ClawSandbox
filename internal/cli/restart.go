@@ -9,15 +9,15 @@ import (
 	"github.com/weiyong1024/clawsandbox/internal/state"
 )
 
-var startCmd = &cobra.Command{
-	Use:     "start <name|all>",
-	Short:   "Start a stopped claw instance",
+var restartCmd = &cobra.Command{
+	Use:     "restart <name|all>",
+	Short:   "Restart a claw instance (stop then start)",
 	Args:    cobra.ExactArgs(1),
-	Example: "  clawsandbox start claw-1\n  clawsandbox start all",
-	RunE:    runStart,
+	Example: "  clawsandbox restart claw-1\n  clawsandbox restart all",
+	RunE:    runRestart,
 }
 
-func runStart(cmd *cobra.Command, args []string) error {
+func runRestart(cmd *cobra.Command, args []string) error {
 	store, err := state.Load()
 	if err != nil {
 		return err
@@ -34,18 +34,21 @@ func runStart(cmd *cobra.Command, args []string) error {
 	}
 
 	for _, inst := range targets {
+		fmt.Printf("Restarting %s ... ", inst.Name)
+
 		status, _, _ := container.Status(cli, inst.ContainerID)
 		if status == "running" {
-			fmt.Printf("%s is already running, skipping\n", inst.Name)
-			inst.Status = "running"
-			continue
+			if err := container.Stop(cli, inst.ContainerID); err != nil {
+				fmt.Println("✗")
+				return fmt.Errorf("stopping %s: %w", inst.Name, err)
+			}
 		}
 
-		fmt.Printf("Starting %s ... ", inst.Name)
 		if err := container.Start(cli, inst.ContainerID); err != nil {
 			fmt.Println("✗")
-			return err
+			return fmt.Errorf("starting %s: %w", inst.Name, err)
 		}
+
 		inst.Status = "running"
 		fmt.Println("✓")
 	}

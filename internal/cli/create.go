@@ -16,10 +16,11 @@ import (
 )
 
 var createCmd = &cobra.Command{
-	Use:   "create <N>",
-	Short: "Create N isolated OpenClaw instances",
-	Args:  cobra.ExactArgs(1),
-	RunE:  runCreate,
+	Use:     "create <N>",
+	Short:   "Create N isolated OpenClaw instances",
+	Args:    cobra.ExactArgs(1),
+	Example: "  clawsandbox create 3\n  clawsandbox create 1",
+	RunE:    runCreate,
 }
 
 func runCreate(cmd *cobra.Command, args []string) error {

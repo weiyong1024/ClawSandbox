@@ -17,10 +17,11 @@ import (
 var destroyPurge bool
 
 var destroyCmd = &cobra.Command{
-	Use:   "destroy <name|all>",
-	Short: "Destroy a claw instance (data is kept by default)",
-	Args:  cobra.ExactArgs(1),
-	RunE:  runDestroy,
+	Use:     "destroy <name|all>",
+	Short:   "Destroy a claw instance (data is kept by default)",
+	Args:    cobra.ExactArgs(1),
+	Example: "  clawsandbox destroy claw-1\n  clawsandbox destroy all --purge",
+	RunE:    runDestroy,
 }
 
 func init() {
@@ -57,7 +58,10 @@ func runDestroy(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	dataDir, _ := config.DataDir()
+	dataDir, err := config.DataDir()
+	if err != nil && destroyPurge {
+		return fmt.Errorf("cannot determine data dir for purge: %w", err)
+	}
 
 	for _, inst := range targets {
 		fmt.Printf("Destroying %s ... ", inst.Name)

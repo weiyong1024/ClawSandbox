@@ -6,6 +6,15 @@
 
 ---
 
+**You don't need a dedicated server.** If you have a Mac with Apple Silicon, ClawSandbox lets you:
+
+- **Deploy OpenClaw in minutes** — fully sandboxed in Docker, completely isolated from everything else on your machine
+- **Run as many as you want** — spin up an entire fleet of OpenClaw instances and experience a one-person company powered by AI
+
+No cloud bills. No new hardware. Everything runs on the machine you already have.
+
+---
+
 ## Background
 
 LLM AI applications are evolving through three stages:
@@ -19,22 +28,22 @@ OpenClaw is a self-hosted personal AI assistant that connects to 20+ messaging p
 ## What ClawSandbox Does
 
 - **One-command fleet deployment** — give it a number, get that many isolated OpenClaw instances
-- **Full desktop per instance** — each claw runs in its own Docker container with an XFCE desktop, accessible from any browser via noVNC
-- **Lifecycle management** — create, start, stop, and destroy instances with simple CLI commands
+- **Web Dashboard** — manage your entire fleet from a browser with real-time stats, one-click actions, and embedded noVNC desktops
+- **Full desktop per instance** — each claw runs in its own Docker container with an XFCE desktop, accessible via noVNC
+- **Lifecycle management** — create, start, stop, restart, and destroy instances via CLI or Dashboard
 - **Data persistence** — each instance's data survives container restarts
 - **Resource isolation** — instances are isolated from your host system and from each other
 
 ## Requirements
 
 - macOS or Linux
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running
+- A Docker environment (e.g. [Docker Desktop](https://www.docker.com/products/docker-desktop/))
 
 ## Quick Start
 
 ### 1. Install
 
 ```bash
-# Build from source
 git clone https://github.com/weiyong1024/ClawSandbox.git
 cd ClawSandbox
 make build
@@ -52,6 +61,26 @@ clawsandbox build
 
 ### 3. Deploy your fleet
 
+**Option A: Web Dashboard (recommended)**
+
+```bash
+# Start the Dashboard
+clawsandbox dashboard serve
+```
+
+Open [http://localhost:8080](http://localhost:8080) in your browser. Click **"Create Instances"**, choose a count, and you're done.
+
+![Dashboard](docs/images/dashboard.jpeg)
+
+The Dashboard provides:
+- Real-time CPU/memory stats for every instance
+- One-click Start / Stop / Destroy actions
+- Click **"Desktop"** on any running instance to open its detail page with an embedded noVNC desktop, live logs, and resource charts
+
+![Instance Desktop](docs/images/instance-desktop.jpeg)
+
+**Option B: CLI**
+
 ```bash
 # Create 3 isolated OpenClaw instances
 clawsandbox create 3
@@ -62,10 +91,9 @@ clawsandbox list
 
 ### 4. Set up each claw
 
-Each claw needs a one-time configuration via its desktop:
+Each claw needs a one-time configuration via its desktop. Open it from the Dashboard (click **"Desktop"** on an instance card) or via CLI:
 
 ```bash
-# Open claw-1's desktop in your browser (noVNC)
 clawsandbox desktop claw-1
 ```
 
@@ -90,9 +118,14 @@ clawsandbox list                        # List all instances and their status
 clawsandbox desktop <name>              # Open an instance's desktop in the browser
 clawsandbox start <name|all>            # Start a stopped instance
 clawsandbox stop <name|all>             # Stop a running instance
+clawsandbox restart <name|all>          # Restart an instance (stop + start)
 clawsandbox logs <name> [-f]            # View instance logs
 clawsandbox destroy <name|all>          # Destroy instance (data kept by default)
 clawsandbox destroy --purge <name|all>  # Destroy instance and delete its data
+clawsandbox dashboard serve              # Start the Web Dashboard
+clawsandbox dashboard open               # Open the Dashboard in your browser
+clawsandbox config                      # Show current configuration
+clawsandbox version                     # Print version info
 ```
 
 ## Resource Usage
@@ -107,7 +140,7 @@ Tested on M4 MacBook Air (16 GB RAM):
 
 ## Project Status
 
-Actively developed. CLI is functional. Web UI planned for a future release.
+Actively developed. Both CLI and Web Dashboard are functional.
 
 Contributions and feedback welcome — please open an issue or PR.
 

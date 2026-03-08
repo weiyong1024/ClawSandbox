@@ -10,10 +10,11 @@ import (
 )
 
 var stopCmd = &cobra.Command{
-	Use:   "stop <name|all>",
-	Short: "Stop a running claw instance",
-	Args:  cobra.ExactArgs(1),
-	RunE:  runStop,
+	Use:     "stop <name|all>",
+	Short:   "Stop a running claw instance",
+	Args:    cobra.ExactArgs(1),
+	Example: "  clawsandbox stop claw-1\n  clawsandbox stop all",
+	RunE:    runStop,
 }
 
 func runStop(cmd *cobra.Command, args []string) error {
@@ -33,6 +34,13 @@ func runStop(cmd *cobra.Command, args []string) error {
 	}
 
 	for _, inst := range targets {
+		status, _, _ := container.Status(cli, inst.ContainerID)
+		if status != "running" {
+			fmt.Printf("%s is already stopped, skipping\n", inst.Name)
+			inst.Status = "stopped"
+			continue
+		}
+
 		fmt.Printf("Stopping %s ... ", inst.Name)
 		if err := container.Stop(cli, inst.ContainerID); err != nil {
 			fmt.Println("✗")

@@ -15,6 +15,7 @@ var listCmd = &cobra.Command{
 	Use:     "list",
 	Aliases: []string{"ls", "status"},
 	Short:   "List all claw instances and their status",
+	Example: "  clawsandbox list\n  clawsandbox ls",
 	RunE:    runList,
 }
 
@@ -35,14 +36,15 @@ func runList(cmd *cobra.Command, args []string) error {
 	}
 
 	w := tabwriter.NewWriter(cmd.OutOrStdout(), 0, 0, 3, ' ', 0)
-	fmt.Fprintln(w, "NAME\tSTATUS\tDESKTOP\tUPTIME")
-	fmt.Fprintln(w, "────\t──────\t───────\t──────")
+	fmt.Fprintln(w, "NAME\tSTATUS\tDESKTOP\tGATEWAY\tUPTIME")
+	fmt.Fprintln(w, "────\t──────\t───────\t───────\t──────")
 
 	for _, inst := range store.Instances {
 		status, startedAt, _ := container.Status(cli, inst.ContainerID)
 		inst.Status = status
 
 		desktop := fmt.Sprintf("http://localhost:%d", inst.Ports.NoVNC)
+		gateway := fmt.Sprintf(":%d", inst.Ports.Gateway)
 		uptime := "—"
 		if status == "running" && !startedAt.IsZero() {
 			uptime = formatUptime(startedAt)
@@ -50,9 +52,10 @@ func runList(cmd *cobra.Command, args []string) error {
 
 		if status != "running" {
 			desktop = "—"
+			gateway = "—"
 		}
 
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", inst.Name, status, desktop, uptime)
+		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", inst.Name, status, desktop, gateway, uptime)
 	}
 
 	w.Flush()

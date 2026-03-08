@@ -22,9 +22,13 @@ func Execute() {
 		listCmd,
 		startCmd,
 		stopCmd,
+		restartCmd,
 		destroyCmd,
 		desktopCmd,
 		logsCmd,
+		dashboardCmd,
+		configCmd,
+		versionCmd,
 	)
 
 	if err := rootCmd.Execute(); err != nil {

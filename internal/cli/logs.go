@@ -13,10 +13,11 @@ import (
 var logsFollow bool
 
 var logsCmd = &cobra.Command{
-	Use:   "logs <name>",
-	Short: "View container logs for a claw instance",
-	Args:  cobra.ExactArgs(1),
-	RunE:  runLogs,
+	Use:     "logs <name>",
+	Short:   "View container logs for a claw instance",
+	Args:    cobra.ExactArgs(1),
+	Example: "  clawsandbox logs claw-1\n  clawsandbox logs claw-1 -f",
+	RunE:    runLogs,
 }
 
 func init() {

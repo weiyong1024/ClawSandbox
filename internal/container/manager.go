@@ -1,6 +1,7 @@
 package container
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"strconv"
@@ -93,6 +94,20 @@ func Logs(cli *docker.Client, containerID string, follow bool, out io.Writer) er
 		Stdout:       true,
 		Stderr:       true,
 		Follow:       follow,
+		Tail:         "100",
+		OutputStream: out,
+		ErrorStream:  out,
+	})
+}
+
+// LogsFollow streams logs with follow=true, cancellable via context.
+func LogsFollow(cli *docker.Client, containerID string, ctx context.Context, out io.Writer) error {
+	return cli.Logs(docker.LogsOptions{
+		Context:      ctx,
+		Container:    containerID,
+		Stdout:       true,
+		Stderr:       true,
+		Follow:       true,
 		Tail:         "100",
 		OutputStream: out,
 		ErrorStream:  out,

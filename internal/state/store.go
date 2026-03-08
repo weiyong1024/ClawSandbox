@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"github.com/weiyong1024/clawsandbox/internal/config"
@@ -24,6 +25,7 @@ type Instance struct {
 }
 
 type Store struct {
+	mu        sync.Mutex
 	Instances []*Instance `json:"instances"`
 	path      string
 }
@@ -53,6 +55,8 @@ func Load() (*Store, error) {
 }
 
 func (s *Store) Save() error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	data, err := json.MarshalIndent(s, "", "  ")
 	if err != nil {
 		return err
@@ -61,10 +65,14 @@ func (s *Store) Save() error {
 }
 
 func (s *Store) Add(inst *Instance) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	s.Instances = append(s.Instances, inst)
 }
 
 func (s *Store) Remove(name string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	out := s.Instances[:0]
 	for _, inst := range s.Instances {
 		if inst.Name != name {
@@ -75,6 +83,8 @@ func (s *Store) Remove(name string) {
 }
 
 func (s *Store) Get(name string) *Instance {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	for _, inst := range s.Instances {
 		if inst.Name == name {
 			return inst
@@ -84,6 +94,8 @@ func (s *Store) Get(name string) *Instance {
 }
 
 func (s *Store) UsedPorts() map[int]bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	used := make(map[int]bool)
 	for _, inst := range s.Instances {
 		used[inst.Ports.NoVNC] = true
@@ -93,6 +105,8 @@ func (s *Store) UsedPorts() map[int]bool {
 }
 
 func (s *Store) NextName(prefix string) string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	used := make(map[string]bool)
 	for _, inst := range s.Instances {
 		used[inst.Name] = true

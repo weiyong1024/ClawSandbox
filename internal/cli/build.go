@@ -16,7 +16,8 @@ var buildCmd = &cobra.Command{
 	Long: `Build the clawsandbox/openclaw Docker image locally.
 This is required once before running 'clawsandbox create'.
 The build downloads ~1.4 GB and may take several minutes.`,
-	RunE: runBuild,
+	Example: "  clawsandbox build",
+	RunE:    runBuild,
 }
 
 func runBuild(cmd *cobra.Command, args []string) error {

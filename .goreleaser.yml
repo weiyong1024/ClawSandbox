@@ -1,0 +1,50 @@
+version: 2
+
+project_name: clawsandbox
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: clawsandbox
+    main: ./cmd/clawsandbox
+    binary: clawsandbox
+    env:
+      - CGO_ENABLED=0
+    ldflags:
+      - -s -w
+      - -X github.com/weiyong1024/clawsandbox/internal/cli.Version={{.Version}}
+      - -X github.com/weiyong1024/clawsandbox/internal/cli.GitCommit={{.ShortCommit}}
+      - -X github.com/weiyong1024/clawsandbox/internal/cli.BuildDate={{.Date}}
+    goos:
+      - darwin
+      - linux
+    goarch:
+      - amd64
+      - arm64
+
+archives:
+  - id: default
+    formats:
+      - tar.gz
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+
+checksum:
+  name_template: "checksums.txt"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^ci:"
+      - "^chore:"
+
+release:
+  github:
+    owner: weiyong1024
+    name: ClawSandbox
+  prerelease: auto
+  name_template: "v{{.Version}}"
