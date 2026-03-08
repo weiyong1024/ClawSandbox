@@ -47,11 +47,19 @@ OpenClaw is a self-hosted personal AI assistant that connects to 20+ messaging p
 git clone https://github.com/weiyong1024/ClawSandbox.git
 cd ClawSandbox
 make build
-# Optionally add to PATH:
+# Optionally install to PATH (otherwise use ./bin/clawsandbox in place of clawsandbox below):
 sudo make install
 ```
 
-### 2. Deploy your fleet
+### 2. Build the Docker image
+
+The first run requires building the sandbox image (~1.4 GB, takes several minutes):
+
+```bash
+clawsandbox build
+```
+
+### 3. Deploy your fleet
 
 **Option A: Web Dashboard (recommended)**
 
@@ -81,7 +89,7 @@ clawsandbox create 3
 clawsandbox list
 ```
 
-### 3. Set up each claw
+### 4. Set up each claw
 
 Each claw needs a one-time configuration via its desktop. Open it from the Dashboard (click **"Desktop"** on an instance card) or via CLI:
 
@@ -130,6 +138,16 @@ clawsandbox build                        # Build image locally (offline/custom u
 clawsandbox config                       # Show current configuration
 clawsandbox version                      # Print version info
 ```
+
+## Reset
+
+To destroy all instances (including data), stop the Dashboard, and remove all build artifacts — effectively returning to a clean slate:
+
+```bash
+make reset
+```
+
+After resetting, start over from [Quick Start](#quick-start) step 1.
 
 ## Resource Usage
 

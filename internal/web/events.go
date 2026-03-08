@@ -39,12 +39,15 @@ func (b *EventBus) Subscribe() chan Event {
 	return ch
 }
 
-// Unsubscribe removes the channel and closes it.
+// Unsubscribe removes the channel and closes it. Safe to call multiple times.
 func (b *EventBus) Unsubscribe(ch chan Event) {
 	b.mu.Lock()
+	_, exists := b.subs[ch]
 	delete(b.subs, ch)
 	b.mu.Unlock()
-	close(ch)
+	if exists {
+		close(ch)
+	}
 }
 
 // Publish sends an event to all subscribers (non-blocking).

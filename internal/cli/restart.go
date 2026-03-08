@@ -49,7 +49,7 @@ func runRestart(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("starting %s: %w", inst.Name, err)
 		}
 
-		inst.Status = "running"
+		store.SetStatus(inst.Name, "running")
 		fmt.Println("✓")
 	}
 

@@ -37,7 +37,7 @@ func runStop(cmd *cobra.Command, args []string) error {
 		status, _, _ := container.Status(cli, inst.ContainerID)
 		if status != "running" {
 			fmt.Printf("%s is already stopped, skipping\n", inst.Name)
-			inst.Status = "stopped"
+			store.SetStatus(inst.Name, "stopped")
 			continue
 		}
 
@@ -46,7 +46,7 @@ func runStop(cmd *cobra.Command, args []string) error {
 			fmt.Println("✗")
 			return err
 		}
-		inst.Status = "stopped"
+		store.SetStatus(inst.Name, "stopped")
 		fmt.Println("✓")
 	}
 

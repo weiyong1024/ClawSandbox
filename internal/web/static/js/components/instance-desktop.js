@@ -17,7 +17,7 @@ export function InstanceDesktop({ instance, stats, pending, onStart, onStop, onB
   }
 
   const isRunning = instance.status === 'running';
-  const novncUrl = `http://${location.hostname}:${instance.novnc_port}`;
+  const novncUrl = `${location.protocol}//${location.hostname}:${instance.novnc_port}`;
 
   return html`
     <div class="instance-desktop">

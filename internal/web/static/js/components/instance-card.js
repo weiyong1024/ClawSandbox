@@ -1,13 +1,6 @@
 import { html } from '../lib.js';
 import { useLang } from '../i18n.js';
-
-function formatBytes(bytes) {
-  if (!bytes) return '0 B';
-  const k = 1024;
-  const units = ['B', 'KB', 'MB', 'GB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return (bytes / Math.pow(k, i)).toFixed(1) + ' ' + units[i];
-}
+import { formatBytes } from '../utils.js';
 
 export function InstanceCard({ instance, stats, pending, onStart, onStop, onDestroy, onDesktop }) {
   const { t } = useLang();

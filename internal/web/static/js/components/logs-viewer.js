@@ -4,6 +4,8 @@ import { connectLogs } from '../ws.js';
 
 const MAX_LINES = 500;
 
+let lineIdCounter = 0;
+
 export function LogsViewer({ name }) {
   const { t } = useLang();
   const [lines, setLines] = useState([]);
@@ -14,7 +16,10 @@ export function LogsViewer({ name }) {
     setLines([]);
 
     const conn = connectLogs(name, (text) => {
-      const newLines = text.split('\n').filter(l => l.length > 0);
+      const newLines = text.split('\n').filter(l => l.length > 0).map(l => ({
+        id: ++lineIdCounter,
+        text: l,
+      }));
       setLines(prev => {
         const combined = [...prev, ...newLines];
         return combined.length > MAX_LINES ? combined.slice(-MAX_LINES) : combined;
@@ -46,7 +51,7 @@ export function LogsViewer({ name }) {
       <div class="logs-body" ref=${containerRef} onScroll=${handleScroll}>
         ${lines.length === 0
           ? html`<div class="logs-empty">${t('logs.waiting')}</div>`
-          : lines.map((line, i) => html`<div key=${i} class="logs-line">${line}</div>`)}
+          : lines.map(line => html`<div key=${line.id} class="logs-line">${line.text}</div>`)}
       </div>
     </div>
   `;

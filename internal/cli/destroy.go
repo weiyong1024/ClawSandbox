@@ -53,7 +53,7 @@ func runDestroy(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	cli, err := container.NewClient()
+	dockerCli, err := container.NewClient()
 	if err != nil {
 		return err
 	}
@@ -66,7 +66,7 @@ func runDestroy(cmd *cobra.Command, args []string) error {
 	for _, inst := range targets {
 		fmt.Printf("Destroying %s ... ", inst.Name)
 
-		if err := container.Remove(cli, inst.ContainerID); err != nil {
+		if err := container.Remove(dockerCli, inst.ContainerID); err != nil {
 			fmt.Fprintf(os.Stderr, "warning: %v\n", err)
 		}
 

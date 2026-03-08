@@ -18,14 +18,14 @@ import (
 
 // instanceResponse is the JSON representation of a single instance.
 type instanceResponse struct {
-	Name      string     `json:"name"`
-	Status    string     `json:"status"`
-	NoVNC     int        `json:"novnc_port"`
-	Gateway   int        `json:"gateway_port"`
-	CreatedAt time.Time  `json:"created_at"`
+	Name      string    `json:"name"`
+	Status    string    `json:"status"`
+	NoVNC     int       `json:"novnc_port"`
+	Gateway   int       `json:"gateway_port"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
-func instanceToResponse(inst *state.Instance) instanceResponse {
+func instanceToResponse(inst state.Instance) instanceResponse {
 	return instanceResponse{
 		Name:      inst.Name,
 		Status:    inst.Status,
@@ -43,9 +43,11 @@ func (s *Server) handleListInstances(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	results := make([]instanceResponse, 0, len(store.Instances))
-	for _, inst := range store.Instances {
+	instances := store.Snapshot()
+	results := make([]instanceResponse, 0, len(instances))
+	for _, inst := range instances {
 		status, _, _ := container.Status(s.docker, inst.ContainerID)
+		store.SetStatus(inst.Name, status)
 		inst.Status = status
 		results = append(results, instanceToResponse(inst))
 	}
@@ -62,7 +64,7 @@ type createRequest struct {
 // handleCreateInstances creates N new instances.
 func (s *Server) handleCreateInstances(w http.ResponseWriter, r *http.Request) {
 	var req createRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid JSON body")
 		return
 	}
@@ -168,7 +170,7 @@ func (s *Server) handleCreateInstances(w http.ResponseWriter, r *http.Request) {
 		}
 
 		s.events.Publish(Event{Type: EventCreated, Name: name})
-		created = append(created, instanceToResponse(inst))
+		created = append(created, instanceToResponse(*inst))
 	}
 
 	writeJSON(w, http.StatusCreated, map[string]any{"data": created})
@@ -192,11 +194,12 @@ func (s *Server) handleStartInstance(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	inst.Status = "running"
+	store.SetStatus(name, "running")
 	_ = store.Save()
 
+	inst.Status = "running"
 	s.events.Publish(Event{Type: EventStarted, Name: name})
-	writeJSON(w, http.StatusOK, map[string]any{"data": instanceToResponse(inst)})
+	writeJSON(w, http.StatusOK, map[string]any{"data": instanceToResponse(*inst)})
 }
 
 // handleStopInstance stops a running instance.
@@ -217,11 +220,12 @@ func (s *Server) handleStopInstance(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	inst.Status = "stopped"
+	store.SetStatus(name, "stopped")
 	_ = store.Save()
 
+	inst.Status = "stopped"
 	s.events.Publish(Event{Type: EventStopped, Name: name})
-	writeJSON(w, http.StatusOK, map[string]any{"data": instanceToResponse(inst)})
+	writeJSON(w, http.StatusOK, map[string]any{"data": instanceToResponse(*inst)})
 }
 
 // handleDestroyInstance removes an instance and optionally purges data.
@@ -279,17 +283,21 @@ func (s *Server) handleInstanceLogs(w http.ResponseWriter, r *http.Request) {
 func writeJSON(w http.ResponseWriter, status int, v any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(v)
+	if err := json.NewEncoder(w).Encode(v); err != nil {
+		log.Printf("writeJSON: %v", err)
+	}
 }
 
 // writeError writes a JSON error response.
 func writeError(w http.ResponseWriter, status int, msg string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(map[string]any{
+	if err := json.NewEncoder(w).Encode(map[string]any{
 		"error": map[string]any{
 			"code":    http.StatusText(status),
 			"message": msg,
 		},
-	})
+	}); err != nil {
+		log.Printf("writeError: %v", err)
+	}
 }

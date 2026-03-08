@@ -55,6 +55,10 @@ func (s *Server) ListenAndServe() error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
+	if err := s.checkExistingDashboard(); err != nil {
+		return err
+	}
+
 	pidPath := writePIDFile()
 
 	errCh := make(chan error, 1)
@@ -81,6 +85,35 @@ func (s *Server) ListenAndServe() error {
 
 	removePIDFile(pidPath)
 	return result
+}
+
+// checkExistingDashboard checks if another dashboard is already running,
+// first via PID file, then by probing the listen address.
+func (s *Server) checkExistingDashboard() error {
+	// Check PID file first.
+	dir, err := config.DataDir()
+	if err == nil {
+		pidPath := filepath.Join(dir, "serve.pid")
+		if data, err := os.ReadFile(pidPath); err == nil {
+			if pid, err := strconv.Atoi(string(data)); err == nil {
+				if proc, err := os.FindProcess(pid); err == nil {
+					if err := proc.Signal(syscall.Signal(0)); err == nil {
+						return fmt.Errorf("Dashboard is already running (pid %d).\n"+
+							"Run 'clawsandbox dashboard stop' first, or use '--port' to listen on a different port", pid)
+					}
+				}
+			}
+		}
+	}
+
+	// Fallback: probe the port directly.
+	ln, err := net.Listen("tcp", s.addr)
+	if err != nil {
+		return fmt.Errorf("port %s is already in use.\n"+
+			"Stop the process using that port, or use '--port' to listen on a different port", s.addr)
+	}
+	ln.Close()
+	return nil
 }
 
 func writePIDFile() string {

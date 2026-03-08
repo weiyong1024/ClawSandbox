@@ -42,7 +42,7 @@ ClawSandbox 是一个 CLI 工具，在单台宿主机上批量创建和管理多
 │    │                │                        │              │
 │    ▼                ▼                        ▼              │
 │  ┌──────────┐  ┌──────────┐           ┌──────────┐         │
-│  │lobster-1 │  │lobster-2 │    ...    │lobster-N │         │
+│  │claw-1 │  │claw-2 │    ...    │claw-N │         │
 │  │          │  │          │           │          │         │
 │  │ XFCE     │  │ XFCE     │           │ XFCE     │         │
 │  │ noVNC    │  │ noVNC    │           │ noVNC    │         │
@@ -60,7 +60,7 @@ ClawSandbox 是一个 CLI 工具，在单台宿主机上批量创建和管理多
 ### 3.1 ClawSandbox CLI
 
 **技术栈：**
-- 语言：Go 1.22+
+- 语言：Go 1.25+
 - CLI 框架：[cobra](https://github.com/spf13/cobra)
 - Docker 交互：[go-dockerclient](https://github.com/fsouza/go-dockerclient)
 - 编译产物：单个静态链接二进制文件（darwin/arm64, darwin/amd64, linux/amd64, linux/arm64）
@@ -99,7 +99,7 @@ resources:
 
 # 实例命名前缀
 naming:
-  prefix: "lobster"      # 实例名: lobster-1, lobster-2, ...
+  prefix: "claw"      # 实例名: claw-1, claw-2, ...
 ```
 
 ### 3.2 Docker 镜像 (clawsandbox/openclaw)
@@ -171,11 +171,11 @@ CLI 维护一个简单的端口分配器，避免冲突：
 
 ```
 实例       noVNC 端口     Gateway 端口
-lobster-1  6901          18789
-lobster-2  6902          18790
-lobster-3  6903          18791
+claw-1  6901          18789
+claw-2  6902          18790
+claw-3  6903          18791
 ...
-lobster-N  6900+N        18788+N
+claw-N  6900+N        18788+N
 ```
 
 分配逻辑：
@@ -191,7 +191,7 @@ lobster-N  6900+N        18788+N
 {
   "instances": [
     {
-      "name": "lobster-1",
+      "name": "claw-1",
       "container_id": "abc123...",
       "status": "running",
       "ports": {
@@ -212,11 +212,11 @@ lobster-N  6900+N        18788+N
 
 ```
 ~/.clawsandbox/data/
-├── lobster-1/
+├── claw-1/
 │   └── openclaw/     → 容器内 /home/node/.openclaw
-├── lobster-2/
+├── claw-2/
 │   └── openclaw/     → 容器内 /home/node/.openclaw
-└── lobster-3/
+└── claw-3/
     └── openclaw/     → 容器内 /home/node/.openclaw
 ```
 
@@ -233,14 +233,14 @@ lobster-N  6900+N        18788+N
 
 ```
 clawsandbox-net (bridge)
-├── lobster-1 (172.20.0.2)
-├── lobster-2 (172.20.0.3)
-└── lobster-3 (172.20.0.4)
+├── claw-1 (172.20.0.2)
+├── claw-2 (172.20.0.3)
+└── claw-3 (172.20.0.4)
 ```
 
 **宿主机访问：**
-- noVNC: `http://localhost:6901` → lobster-1 桌面
-- Gateway: `ws://localhost:18789` → lobster-1 Gateway（内部用，用户一般不直接访问）
+- noVNC: `http://localhost:6901` → claw-1 桌面
+- Gateway: `ws://localhost:18789` → claw-1 Gateway（内部用，用户一般不直接访问）
 
 ## 4. 用户操作流程
 
@@ -253,12 +253,12 @@ clawsandbox build
 # 2. 创建 3 个龙虾
 clawsandbox create 3
 # → 输出:
-#   Creating lobster-1 ... ✓  desktop: http://localhost:6901
-#   Creating lobster-2 ... ✓  desktop: http://localhost:6902
-#   Creating lobster-3 ... ✓  desktop: http://localhost:6903
+#   Creating claw-1 ... ✓  desktop: http://localhost:6901
+#   Creating claw-2 ... ✓  desktop: http://localhost:6902
+#   Creating claw-3 ... ✓  desktop: http://localhost:6903
 
 # 3. 打开龙虾桌面，进入 OpenClaw onboard 配置 Telegram 等
-clawsandbox desktop lobster-1
+clawsandbox desktop claw-1
 ```
 
 ### 4.2 日常使用
@@ -267,16 +267,16 @@ clawsandbox desktop lobster-1
 # 查看军团状态
 clawsandbox list
 # NAME        STATUS    DESKTOP              UPTIME
-# lobster-1   running   http://localhost:6901 2d 3h
-# lobster-2   running   http://localhost:6902 2d 3h
-# lobster-3   stopped   -                    -
+# claw-1   running   http://localhost:6901 2d 3h
+# claw-2   running   http://localhost:6902 2d 3h
+# claw-3   stopped   -                    -
 
 # 启动/停止
-clawsandbox start lobster-3
-clawsandbox stop lobster-1
+clawsandbox start claw-3
+clawsandbox stop claw-1
 
 # 查看日志
-clawsandbox logs lobster-1
+clawsandbox logs claw-1
 ```
 
 ### 4.3 OpenClaw Onboard 流程（容器内）
@@ -445,7 +445,7 @@ clawsandbox create 2
 clawsandbox list
 
 # 3. 访问桌面
-clawsandbox desktop lobster-1
+clawsandbox desktop claw-1
 # → 浏览器打开 http://localhost:6901，看到 XFCE 桌面
 
 # 4. 在桌面终端中完成 OpenClaw 配置
@@ -454,19 +454,19 @@ openclaw gateway --port 18789
 # → 在 Chromium 中打开终端输出的地址，确认控制台可用
 
 # 5. 停止/启动
-clawsandbox stop lobster-1
-clawsandbox start lobster-1
+clawsandbox stop claw-1
+clawsandbox start claw-1
 # → 确认数据（~/.openclaw）在容器重启后保留
 
 # 6. 销毁
-clawsandbox destroy lobster-2
+clawsandbox destroy claw-2
 clawsandbox list
-# → 确认 lobster-2 已移除
+# → 确认 claw-2 已移除
 ```
 
 ### 资源验证
 ```bash
-docker stats lobster-1 lobster-2
+docker stats claw-1 claw-2
 # → 确认内存在 memory_limit 之内
 ```
 

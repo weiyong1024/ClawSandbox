@@ -76,7 +76,7 @@ func Remove(cli *docker.Client, containerID string) error {
 func Status(cli *docker.Client, containerID string) (string, time.Time, error) {
 	c, err := cli.InspectContainerWithOptions(docker.InspectContainerOptions{ID: containerID})
 	if err != nil {
-		return "unknown", time.Time{}, nil
+		return "unknown", time.Time{}, fmt.Errorf("inspecting container %s: %w", containerID, err)
 	}
 	switch c.State.Status {
 	case "running":

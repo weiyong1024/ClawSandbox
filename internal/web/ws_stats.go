@@ -13,7 +13,13 @@ import (
 
 // wsUpgrader is shared by all WebSocket handlers.
 var wsUpgrader = websocket.Upgrader{
-	CheckOrigin: func(r *http.Request) bool { return true },
+	CheckOrigin: func(r *http.Request) bool {
+		// Only allow same-host connections (localhost → localhost).
+		return r.Header.Get("Origin") == "" ||
+			r.Host == r.Header.Get("Origin") ||
+			r.Header.Get("Origin") == "http://"+r.Host ||
+			r.Header.Get("Origin") == "https://"+r.Host
+	},
 }
 
 type instanceStats struct {
@@ -49,8 +55,9 @@ func (s *Server) handleWSStats(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 
-			results := make([]instanceStats, 0, len(store.Instances))
-			for _, inst := range store.Instances {
+			instances := store.Snapshot()
+			results := make([]instanceStats, 0, len(instances))
+			for _, inst := range instances {
 				status, _, _ := container.Status(s.docker, inst.ContainerID)
 				if status != "running" {
 					continue

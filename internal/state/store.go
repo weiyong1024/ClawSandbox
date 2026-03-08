@@ -26,8 +26,27 @@ type Instance struct {
 
 type Store struct {
 	mu        sync.Mutex
-	Instances []*Instance `json:"instances"`
+	instances []*Instance
 	path      string
+}
+
+// MarshalJSON implements json.Marshaler to serialize the unexported instances field.
+func (s *Store) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		Instances []*Instance `json:"instances"`
+	}{Instances: s.instances})
+}
+
+// UnmarshalJSON implements json.Unmarshaler to deserialize into the unexported instances field.
+func (s *Store) UnmarshalJSON(data []byte) error {
+	var raw struct {
+		Instances []*Instance `json:"instances"`
+	}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	s.instances = raw.Instances
+	return nil
 }
 
 func Load() (*Store, error) {
@@ -67,37 +86,62 @@ func (s *Store) Save() error {
 func (s *Store) Add(inst *Instance) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.Instances = append(s.Instances, inst)
+	s.instances = append(s.instances, inst)
 }
 
 func (s *Store) Remove(name string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	out := s.Instances[:0]
-	for _, inst := range s.Instances {
+	out := make([]*Instance, 0, len(s.instances))
+	for _, inst := range s.instances {
 		if inst.Name != name {
 			out = append(out, inst)
 		}
 	}
-	s.Instances = out
+	s.instances = out
 }
 
+// Get returns a copy of the instance with the given name, or nil if not found.
 func (s *Store) Get(name string) *Instance {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	for _, inst := range s.Instances {
+	for _, inst := range s.instances {
 		if inst.Name == name {
-			return inst
+			cp := *inst
+			return &cp
 		}
 	}
 	return nil
+}
+
+// SetStatus updates the status of the named instance.
+func (s *Store) SetStatus(name, status string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for _, inst := range s.instances {
+		if inst.Name == name {
+			inst.Status = status
+			return
+		}
+	}
+}
+
+// Snapshot returns a copy of all instances.
+func (s *Store) Snapshot() []Instance {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	out := make([]Instance, len(s.instances))
+	for i, inst := range s.instances {
+		out[i] = *inst
+	}
+	return out
 }
 
 func (s *Store) UsedPorts() map[int]bool {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	used := make(map[int]bool)
-	for _, inst := range s.Instances {
+	for _, inst := range s.instances {
 		used[inst.Ports.NoVNC] = true
 		used[inst.Ports.Gateway] = true
 	}
@@ -108,7 +152,7 @@ func (s *Store) NextName(prefix string) string {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	used := make(map[string]bool)
-	for _, inst := range s.Instances {
+	for _, inst := range s.instances {
 		used[inst.Name] = true
 	}
 	for i := 1; ; i++ {

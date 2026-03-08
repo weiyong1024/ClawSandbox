@@ -25,7 +25,8 @@ func runList(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if len(store.Instances) == 0 {
+	instances := store.Snapshot()
+	if len(instances) == 0 {
 		fmt.Println("No instances found. Run 'clawsandbox create <N>' to get started.")
 		return nil
 	}
@@ -39,9 +40,9 @@ func runList(cmd *cobra.Command, args []string) error {
 	fmt.Fprintln(w, "NAME\tSTATUS\tDESKTOP\tGATEWAY\tUPTIME")
 	fmt.Fprintln(w, "────\t──────\t───────\t───────\t──────")
 
-	for _, inst := range store.Instances {
+	for _, inst := range instances {
 		status, startedAt, _ := container.Status(cli, inst.ContainerID)
-		inst.Status = status
+		store.SetStatus(inst.Name, status)
 
 		desktop := fmt.Sprintf("http://localhost:%d", inst.Ports.NoVNC)
 		gateway := fmt.Sprintf(":%d", inst.Ports.Gateway)

@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -24,7 +25,12 @@ var dashboardStopCmd = &cobra.Command{
 func runDashboardStop(cmd *cobra.Command, args []string) error {
 	pid, pidPath, err := readPIDFile()
 	if err != nil {
-		return err
+		// PID file missing — try to find the process by port.
+		pid, err = findPIDByPort(dashboardServePort)
+		if err != nil {
+			return fmt.Errorf("Dashboard is not running")
+		}
+		pidPath = ""
 	}
 
 	proc, err := os.FindProcess(pid)
@@ -32,9 +38,19 @@ func runDashboardStop(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("process %d not found: %w", pid, err)
 	}
 
+	// Verify the process is actually alive.
+	if err := proc.Signal(syscall.Signal(0)); err != nil {
+		if pidPath != "" {
+			os.Remove(pidPath)
+		}
+		return fmt.Errorf("Dashboard is not running (stale PID %d)", pid)
+	}
+
 	fmt.Printf("Stopping Dashboard (pid %d) ... ", pid)
 	if err := proc.Signal(syscall.SIGTERM); err != nil {
-		os.Remove(pidPath)
+		if pidPath != "" {
+			os.Remove(pidPath)
+		}
 		return fmt.Errorf("failed to stop: %w", err)
 	}
 
@@ -45,7 +61,9 @@ func runDashboardStop(cmd *cobra.Command, args []string) error {
 		time.Sleep(100 * time.Millisecond)
 	}
 
-	os.Remove(pidPath)
+	if pidPath != "" {
+		os.Remove(pidPath)
+	}
 	fmt.Println("✓")
 	return nil
 }
@@ -58,11 +76,25 @@ func readPIDFile() (int, string, error) {
 	pidPath := filepath.Join(dir, "serve.pid")
 	data, err := os.ReadFile(pidPath)
 	if err != nil {
-		return 0, "", fmt.Errorf("Dashboard is not running (no PID file at %s)", pidPath)
+		return 0, "", fmt.Errorf("no PID file")
 	}
 	pid, err := strconv.Atoi(strings.TrimSpace(string(data)))
 	if err != nil {
 		return 0, pidPath, fmt.Errorf("invalid PID file: %w", err)
 	}
 	return pid, pidPath, nil
+}
+
+// findPIDByPort uses lsof to find the PID of the process listening on the given port.
+func findPIDByPort(port int) (int, error) {
+	out, err := exec.Command("lsof", "-ti", fmt.Sprintf("tcp:%d", port), "-sTCP:LISTEN").Output()
+	if err != nil {
+		return 0, fmt.Errorf("no process found on port %d", port)
+	}
+	line := strings.TrimSpace(strings.Split(string(out), "\n")[0])
+	pid, err := strconv.Atoi(line)
+	if err != nil {
+		return 0, fmt.Errorf("unexpected lsof output: %s", line)
+	}
+	return pid, nil
 }

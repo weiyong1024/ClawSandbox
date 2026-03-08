@@ -1,7 +1,9 @@
 package web
 
 import (
+	"context"
 	"net/http"
+	"strings"
 
 	"github.com/weiyong1024/clawsandbox/internal/container"
 )
@@ -34,7 +36,7 @@ func (s *Server) handleImageBuild(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Connection", "keep-alive")
 
 	imageRef := s.config.ImageRef()
-	pr, pw := newLineWriter()
+	pr, pw := newLineWriter(r.Context())
 
 	done := make(chan error, 1)
 	go func() {
@@ -55,19 +57,25 @@ func (s *Server) handleImageBuild(w http.ResponseWriter, r *http.Request) {
 	flusher.Flush()
 }
 
-// writeSSE writes a single Server-Sent Event.
+// writeSSE writes a single Server-Sent Event, handling multi-line data correctly.
 func writeSSE(w http.ResponseWriter, event, data string) {
-	w.Write([]byte("event: " + event + "\ndata: " + data + "\n\n"))
+	w.Write([]byte("event: " + event + "\n"))
+	for _, line := range strings.Split(data, "\n") {
+		w.Write([]byte("data: " + line + "\n"))
+	}
+	w.Write([]byte("\n"))
 }
 
 // newLineWriter returns a channel that receives lines as they are written.
-func newLineWriter() (<-chan string, *lineWriter) {
+// It respects context cancellation to avoid blocking the build goroutine.
+func newLineWriter(ctx context.Context) (<-chan string, *lineWriter) {
 	ch := make(chan string, 64)
-	return ch, &lineWriter{ch: ch}
+	return ch, &lineWriter{ch: ch, ctx: ctx}
 }
 
 type lineWriter struct {
 	ch  chan string
+	ctx context.Context
 	buf []byte
 }
 
@@ -86,14 +94,21 @@ func (lw *lineWriter) Write(p []byte) (int, error) {
 		}
 		line := string(lw.buf[:idx])
 		lw.buf = lw.buf[idx+1:]
-		lw.ch <- line
+		select {
+		case lw.ch <- line:
+		case <-lw.ctx.Done():
+			return len(p), lw.ctx.Err()
+		}
 	}
 	return len(p), nil
 }
 
 func (lw *lineWriter) Close() error {
 	if len(lw.buf) > 0 {
-		lw.ch <- string(lw.buf)
+		select {
+		case lw.ch <- string(lw.buf):
+		case <-lw.ctx.Done():
+		}
 		lw.buf = nil
 	}
 	close(lw.ch)

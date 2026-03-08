@@ -7,7 +7,12 @@ async function request(method, path, body) {
     opts.body = JSON.stringify(body);
   }
   const res = await fetch(BASE + path, opts);
-  const json = await res.json();
+  let json;
+  try {
+    json = await res.json();
+  } catch {
+    throw new Error(res.statusText || `HTTP ${res.status}`);
+  }
   if (!res.ok) throw new Error(json.error?.message || res.statusText);
   return json.data;
 }
@@ -15,8 +20,8 @@ async function request(method, path, body) {
 export const api = {
   listInstances:  ()            => request('GET',    '/instances'),
   createInstances:(count)       => request('POST',   '/instances', { count }),
-  startInstance:  (name)        => request('POST',   `/instances/${name}/start`),
-  stopInstance:   (name)        => request('POST',   `/instances/${name}/stop`),
-  destroyInstance:(name, purge) => request('DELETE',  `/instances/${name}${purge ? '?purge=true' : ''}`),
+  startInstance:  (name)        => request('POST',   `/instances/${encodeURIComponent(name)}/start`),
+  stopInstance:   (name)        => request('POST',   `/instances/${encodeURIComponent(name)}/stop`),
+  destroyInstance:(name, purge) => request('DELETE',  `/instances/${encodeURIComponent(name)}${purge ? '?purge=true' : ''}`),
   imageStatus:    ()            => request('GET',    '/image/status'),
 };
