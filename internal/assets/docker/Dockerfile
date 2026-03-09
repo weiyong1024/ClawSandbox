@@ -1,26 +1,39 @@
 FROM node:22-bookworm
 
 # ── Layer 1: System packages ──────────────────────────────────────────────────
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    # Lightweight desktop
-    xfce4 \
-    xfce4-terminal \
-    dbus-x11 \
-    # VNC server
-    tigervnc-standalone-server \
-    # noVNC web client
-    novnc \
-    websockify \
-    # Desktop browser (for accessing OpenClaw Control UI at localhost:18789)
-    chromium \
-    # Fonts (CJK support)
-    fonts-noto-cjk \
-    # Process manager
-    supervisor \
-    # Utilities
-    curl \
-    wget \
-    && rm -rf /var/lib/apt/lists/*
+RUN set -eux; \
+    sed -i 's|http://|https://|g' /etc/apt/sources.list.d/debian.sources; \
+    printf '%s\n' \
+      'Acquire::Retries "5";' \
+      'Acquire::http::Timeout "30";' \
+      'Acquire::https::Timeout "30";' \
+      'Acquire::http::Pipeline-Depth "0";' \
+      'Acquire::ForceIPv4 "true";' \
+      > /etc/apt/apt.conf.d/80clawsandbox-network; \
+    attempt=1; \
+    until [ "$attempt" -gt 3 ]; do \
+      apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        xfce4 \
+        xfce4-terminal \
+        dbus-x11 \
+        tigervnc-standalone-server \
+        novnc \
+        websockify \
+        chromium \
+        fonts-noto-cjk \
+        supervisor \
+        curl \
+        wget && break; \
+      if [ "$attempt" -eq 3 ]; then \
+        exit 1; \
+      fi; \
+      echo "apt install failed on attempt $attempt, retrying..." >&2; \
+      apt-get clean; \
+      rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/partial/*; \
+      sleep $((attempt * 5)); \
+      attempt=$((attempt + 1)); \
+    done; \
+    rm -rf /var/lib/apt/lists/*
 
 # Serve noVNC at /
 RUN ln -sf /usr/share/novnc/vnc.html /usr/share/novnc/index.html

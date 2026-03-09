@@ -21,10 +21,10 @@ import (
 
 // Server is the ClawSandbox Web UI HTTP server.
 type Server struct {
-	docker   *docker.Client
-	config   *config.Config
-	events   *EventBus
-	addr     string
+	docker *docker.Client
+	config *config.Config
+	events *EventBus
+	addr   string
 }
 
 // NewServer creates a new Server.
@@ -117,7 +117,7 @@ func (s *Server) checkExistingDashboard() error {
 }
 
 func writePIDFile() string {
-	dir, err := config.DataDir()
+	dir, err := config.EnsureDataDir()
 	if err != nil {
 		return ""
 	}

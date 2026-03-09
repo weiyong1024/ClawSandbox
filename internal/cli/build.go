@@ -15,9 +15,9 @@ var buildCmd = &cobra.Command{
 	Use:   "build",
 	Short: "Build the OpenClaw sandbox Docker image",
 	Long: `Build the OpenClaw sandbox Docker image locally.
-This is only needed for offline use or customization.
-When connected to the internet, 'clawsandbox create' auto-pulls the
-pre-built image from GHCR.`,
+This is the recommended first-run path today and is required whenever
+the local image is missing.
+It also supports offline use or customization.`,
 	Example: "  clawsandbox build",
 	RunE:    runBuild,
 }

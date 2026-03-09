@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/fs"
 	"strings"
+	"time"
 
 	docker "github.com/fsouza/go-dockerclient"
 
@@ -29,21 +30,36 @@ func ImageExists(cli *docker.Client, imageRef string) (bool, error) {
 }
 
 func Build(cli *docker.Client, imageRef string, out io.Writer) error {
-	buildCtx, err := createBuildContext()
-	if err != nil {
-		return fmt.Errorf("creating build context: %w", err)
+	var lastErr error
+	for attempt := 1; attempt <= 2; attempt++ {
+		buildCtx, err := createBuildContext()
+		if err != nil {
+			return fmt.Errorf("creating build context: %w", err)
+		}
+
+		var logBuf bytes.Buffer
+		buildOut := io.MultiWriter(out, &logBuf)
+
+		err = cli.BuildImage(docker.BuildImageOptions{
+			Name:           imageRef,
+			InputStream:    buildCtx,
+			OutputStream:   buildOut,
+			RmTmpContainer: true,
+		})
+		if err == nil {
+			return nil
+		}
+
+		lastErr = fmt.Errorf("build failed: %w", err)
+		if attempt == 2 || !isTransientBuildFailure(logBuf.String(), err) {
+			return lastErr
+		}
+
+		fmt.Fprintf(out, "\nBuild hit a transient network error. Retrying automatically (%d/2)...\n\n", attempt+1)
+		time.Sleep(5 * time.Second)
 	}
 
-	err = cli.BuildImage(docker.BuildImageOptions{
-		Name:           imageRef,
-		InputStream:    buildCtx,
-		OutputStream:   out,
-		RmTmpContainer: true,
-	})
-	if err != nil {
-		return fmt.Errorf("build failed: %w", err)
-	}
-	return nil
+	return lastErr
 }
 
 // TagImage adds an additional tag to an already-built image.
@@ -92,4 +108,27 @@ func createBuildContext() (io.Reader, error) {
 	}
 	tw.Close()
 	return buf, nil
+}
+
+func isTransientBuildFailure(buildLog string, err error) bool {
+	text := strings.ToLower(buildLog)
+	if err != nil {
+		text += "\n" + strings.ToLower(err.Error())
+	}
+
+	for _, marker := range []string{
+		"connection failed",
+		"temporary failure resolving",
+		"i/o timeout",
+		"tls handshake timeout",
+		"connection reset by peer",
+		"unexpected eof",
+		"unable to fetch some archives",
+	} {
+		if strings.Contains(text, marker) {
+			return true
+		}
+	}
+
+	return false
 }

@@ -1,29 +1,32 @@
 # ClawSandbox
 
-> Deploy and manage a fleet of isolated [OpenClaw](https://github.com/openclaw/openclaw) instances on a single machine.
+> Turn one OpenClaw into an isolated AI crew.
 
 [中文文档](./README.zh-CN.md)
 
 ---
 
-**You don't need a dedicated server.** If you have a Mac with Apple Silicon, ClawSandbox lets you:
+**Run multiple OpenClaw instances on one machine, each with its own identity, credentials, browser session, data, and blast radius.**
 
-- **Deploy OpenClaw in minutes** — fully sandboxed in Docker, completely isolated from everything else on your machine
-- **Run as many as you want** — spin up an entire fleet of OpenClaw instances and experience a one-person company powered by AI
+Built for the moment when one assistant becomes a team:
 
-No cloud bills. No new hardware. Everything runs on the machine you already have.
+- **One claw, one identity** — separate Telegram / WhatsApp / Slack accounts
+- **One claw, one boundary** — isolated container, filesystem, browser, ports, and runtime state
+- **One claw, one budget** — different models, prompts, API keys, skills, or experiments
+- **One stable, one experimental** — keep production running while you test the next claw
 
----
+No extra Mac Mini. No default cloud bill. Just the machine you already own.
 
-## Background
+## Why Not Just One OpenClaw?
 
-LLM AI applications are evolving through three stages:
+OpenClaw already supports multiple agents and even multiple Gateways on the same host. ClawSandbox exists for the next boundary: **runtime isolation**.
 
-1. **ChatBot** — helps everyone access knowledge
-2. **Agent** — makes everyone a professional
-3. **OpenClaw** — makes everyone a manager
+Start with one OpenClaw if you only need one assistant. Reach for ClawSandbox when you need:
 
-OpenClaw is a self-hosted personal AI assistant that connects to 20+ messaging platforms including WhatsApp, Telegram, and Slack. ClawSandbox removes the deployment bottleneck — instead of struggling to run a single instance, you can spin up an entire fleet with one command.
+- different bot or channel accounts
+- different credentials or model providers
+- different browser sessions or long-running automation state
+- separate "prod", "staging", or "backup" claws
 
 ## What ClawSandbox Does
 
@@ -34,14 +37,28 @@ OpenClaw is a self-hosted personal AI assistant that connects to 20+ messaging p
 - **Data persistence** — each instance's data survives container restarts
 - **Resource isolation** — instances are isolated from your host system and from each other
 
-## Requirements
+## What You Need
 
-- macOS or Linux
-- A Docker environment (e.g. [Docker Desktop](https://www.docker.com/products/docker-desktop/))
+- **macOS or Linux** — Apple Silicon Macs are a good fit for local use
+- **Docker installed and running** — for most users this means [Docker Desktop](https://www.docker.com/products/docker-desktop/) must already show the engine as running
+- **A local Docker context that works from the terminal** — `docker version` should succeed before you continue
+- **Go 1.25+ and `make`** — only needed if you are building ClawSandbox from source, as shown below
+- **Enough local resources** — at least 8 GB RAM and 10+ GB free disk; 16 GB RAM is recommended if you want to run multiple claws comfortably
+- **Internet on first run** — a fresh local image build downloads base layers, packages, and browser assets
+
+## First-Run Expectation
+
+The recommended first-run path today is:
+
+- **Build the local image first** — run `clawsandbox build` before you create anything
+- **Then start the Dashboard or use the CLI** — once the image is local, instance creation takes seconds
+- **Expect the first local build to take time** — on a fresh machine, several minutes is normal
+
+If Docker is not running, ClawSandbox will fail early. Start Docker first, then continue.
 
 ## Quick Start
 
-### 1. Install
+### 1. Build the CLI
 
 ```bash
 git clone https://github.com/weiyong1024/ClawSandbox.git
@@ -51,15 +68,40 @@ make build
 sudo make install
 ```
 
-### 2. Build the Docker image
+### 2. Make sure Docker is ready
 
-The first run requires building the sandbox image (~1.4 GB, takes several minutes):
+Before going further, confirm Docker works from your terminal:
+
+```bash
+docker version
+```
+
+If that command fails, open Docker Desktop and wait until the engine is running.
+
+### 3. Run a quick preflight
+
+This gives you a plain-English answer before you wait on a build:
+
+```bash
+clawsandbox doctor
+```
+
+It tells you:
+
+- whether Docker is reachable
+- whether the local image already exists
+- what startup path you are on
+- what to do next
+
+### 4. Build the local Docker image
+
+Build the local image before your first create (~4 GB image, takes several minutes on a fresh machine):
 
 ```bash
 clawsandbox build
 ```
 
-### 3. Deploy your fleet
+### 5. Deploy your fleet
 
 **Option A: Web Dashboard (recommended)**
 
@@ -89,7 +131,7 @@ clawsandbox create 3
 clawsandbox list
 ```
 
-### 4. Set up each claw
+### 6. Set up each claw
 
 Each claw needs a one-time configuration via its desktop. Open it from the Dashboard (click **"Desktop"** on an instance card) or via CLI:
 
@@ -121,7 +163,8 @@ clawsandbox dashboard --help    # Show dashboard subcommands
 Quick reference:
 
 ```bash
-clawsandbox create <N>                  # Create N claw instances (auto-pulls image)
+clawsandbox doctor                      # Run preflight checks and get the next step
+clawsandbox create <N>                  # Create N claw instances (run `clawsandbox build` first on a new machine)
 clawsandbox list                        # List all instances and their status
 clawsandbox desktop <name>              # Open an instance's desktop in the browser
 clawsandbox start <name|all>            # Start a stopped instance
@@ -134,7 +177,7 @@ clawsandbox dashboard serve              # Start the Web Dashboard
 clawsandbox dashboard stop               # Stop the Web Dashboard
 clawsandbox dashboard restart            # Restart the Web Dashboard
 clawsandbox dashboard open               # Open the Dashboard in your browser
-clawsandbox build                        # Build image locally (offline/custom use)
+clawsandbox build                        # Build the local image for first run, offline use, or customization
 clawsandbox config                       # Show current configuration
 clawsandbox version                      # Print version info
 ```
@@ -164,6 +207,7 @@ Tested on M4 MacBook Air (16 GB RAM):
 Actively developed. Both CLI and Web Dashboard are functional.
 
 Contributions and feedback welcome — please open an issue or PR.
+Security policy: [SECURITY.md](./SECURITY.md). Contribution guide: [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## License
 

@@ -18,6 +18,7 @@ with a full Linux desktop, accessible via your browser.`,
 func Execute() {
 	rootCmd.AddCommand(
 		buildCmd,
+		doctorCmd,
 		createCmd,
 		listCmd,
 		startCmd,

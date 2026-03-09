@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	DefaultImageName = "ghcr.io/weiyong1024/clawsandbox"
+	DefaultImageName    = "ghcr.io/weiyong1024/clawsandbox"
 	DefaultNoVNCBase    = 6901
 	DefaultGatewayBase  = 18789
 	DefaultMemoryLimit  = "4g"
@@ -89,6 +89,17 @@ func DataDir() (string, error) {
 		return "", fmt.Errorf("getting home dir: %w", err)
 	}
 	return filepath.Join(home, ".clawsandbox"), nil
+}
+
+func EnsureDataDir() (string, error) {
+	dir, err := DataDir()
+	if err != nil {
+		return "", err
+	}
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return "", fmt.Errorf("creating data dir: %w", err)
+	}
+	return dir, nil
 }
 
 func configPath() (string, error) {

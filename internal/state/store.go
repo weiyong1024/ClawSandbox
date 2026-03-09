@@ -50,12 +50,9 @@ func (s *Store) UnmarshalJSON(data []byte) error {
 }
 
 func Load() (*Store, error) {
-	dir, err := config.DataDir()
+	dir, err := config.EnsureDataDir()
 	if err != nil {
 		return nil, err
-	}
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		return nil, fmt.Errorf("creating data dir: %w", err)
 	}
 	path := filepath.Join(dir, "state.json")
 	data, err := os.ReadFile(path)

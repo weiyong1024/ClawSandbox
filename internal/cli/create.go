@@ -39,17 +39,13 @@ func runCreate(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// Check image exists; attempt auto-pull from GHCR if missing
+	// Require a local image for now. This keeps first-run behavior predictable.
 	exists, err := container.ImageExists(cli, cfg.ImageRef())
 	if err != nil {
 		return err
 	}
 	if !exists {
-		fmt.Printf("Image %s not found locally, pulling from registry...\n", cfg.ImageRef())
-		if pullErr := container.PullImage(cli, cfg.Image.Name, cfg.Image.Tag, os.Stdout); pullErr != nil {
-			return fmt.Errorf("image %s not found locally and pull failed: %v\nRun 'clawsandbox build' to build it manually", cfg.ImageRef(), pullErr)
-		}
-		fmt.Println("Image pulled successfully.")
+		return fmt.Errorf("image %s is not available locally\nRun 'clawsandbox build' first", cfg.ImageRef())
 	}
 
 	// Ensure network
