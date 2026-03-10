@@ -220,6 +220,7 @@ function App() {
     ${configureName && html`
       <${ConfigureDialog}
         instanceName=${configureName}
+        currentModelAssetId=${(instances.find(i => i.name === configureName) || {}).model_asset_id || ''}
         onClose=${() => setConfigureName(null)}
         onConfigure=${onConfigure}
       />

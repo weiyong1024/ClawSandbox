@@ -22,6 +22,14 @@ type ConfigureParams struct {
 
 // Configure runs openclaw CLI commands inside the container to set up the instance.
 func Configure(cli *docker.Client, p ConfigureParams) error {
+	// Stop the gateway if it is already running (reconfigure case).
+	// This prevents config writes from triggering a hot-reload self-restart
+	// that spawns orphan child processes supervisor cannot track (port conflict),
+	// and avoids the gateway reloading with an incomplete intermediate config.
+	_ = dockerExecAs(cli, p.ContainerID, "root", []string{
+		"supervisorctl", "stop", "openclaw",
+	})
+
 	// Step 1: onboard with API key (runs as "node" — writes to ~node/.openclaw/)
 	apiKeyFlag := fmt.Sprintf("--%s-api-key", p.Provider)
 	if err := dockerExecAs(cli, p.ContainerID, "node", []string{
@@ -83,7 +91,15 @@ func Configure(cli *docker.Client, p ConfigureParams) error {
 			return fmt.Errorf("channels add: %w", err)
 		}
 
-		// Step 7: set DM and group policies to "open" so the bot responds
+		// Step 7: stop gateway before writing policy changes so they are
+		// applied offline — no hot-reload with incomplete intermediate config.
+		if err := dockerExecAs(cli, p.ContainerID, "root", []string{
+			"supervisorctl", "stop", "openclaw",
+		}); err != nil {
+			return fmt.Errorf("supervisorctl stop before policies: %w", err)
+		}
+
+		// Set DM and group policies to "open" so the bot responds
 		// without pairing. allowFrom must include "*" when policy is "open".
 		channelCfg := fmt.Sprintf("channels.%s", p.Channel)
 		policySteps := []struct{ path, value string }{
@@ -103,12 +119,11 @@ func Configure(cli *docker.Client, p ConfigureParams) error {
 			}
 		}
 
-		// Step 8: restart gateway to ensure all policy changes take effect.
-		// Hot reload may not pick up rapid successive config changes.
+		// Step 8: start gateway with the complete, final config.
 		if err := dockerExecAs(cli, p.ContainerID, "root", []string{
-			"supervisorctl", "restart", "openclaw",
+			"supervisorctl", "start", "openclaw",
 		}); err != nil {
-			return fmt.Errorf("supervisorctl restart: %w", err)
+			return fmt.Errorf("supervisorctl start after policies: %w", err)
 		}
 		if err := waitForGateway(cli, p.ContainerID, 30*time.Second); err != nil {
 			return fmt.Errorf("waiting for gateway restart: %w", err)

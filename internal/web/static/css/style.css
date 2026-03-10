@@ -317,6 +317,41 @@ body {
   font-size: 0.78rem;
 }
 
+/* Config info */
+.card-config {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin-bottom: 14px;
+  padding: 8px 10px;
+  background: var(--surface-alt);
+  border-radius: 6px;
+}
+
+.config-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+}
+
+.config-label {
+  color: var(--text-dim);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.config-value {
+  color: var(--text);
+  font-size: 0.8rem;
+}
+
+.config-unconfigured {
+  color: var(--text-dim);
+  font-style: italic;
+}
+
 /* Stats bars */
 .card-stats { margin-bottom: 14px; }
 

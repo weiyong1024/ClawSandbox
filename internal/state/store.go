@@ -17,11 +17,13 @@ type Ports struct {
 }
 
 type Instance struct {
-	Name        string    `json:"name"`
-	ContainerID string    `json:"container_id"`
-	Status      string    `json:"status"`
-	Ports       Ports     `json:"ports"`
-	CreatedAt   time.Time `json:"created_at"`
+	Name           string    `json:"name"`
+	ContainerID    string    `json:"container_id"`
+	Status         string    `json:"status"`
+	Ports          Ports     `json:"ports"`
+	CreatedAt      time.Time `json:"created_at"`
+	ModelAssetID   string    `json:"model_asset_id,omitempty"`
+	ChannelAssetID string    `json:"channel_asset_id,omitempty"`
 }
 
 type Store struct {
@@ -121,6 +123,19 @@ func (s *Store) SetStatus(name, status string) {
 	for _, inst := range s.instances {
 		if inst.Name == name {
 			inst.Status = status
+			return
+		}
+	}
+}
+
+// SetConfig stores the asset IDs used to configure the named instance.
+func (s *Store) SetConfig(name, modelAssetID, channelAssetID string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for _, inst := range s.instances {
+		if inst.Name == name {
+			inst.ModelAssetID = modelAssetID
+			inst.ChannelAssetID = channelAssetID
 			return
 		}
 	}

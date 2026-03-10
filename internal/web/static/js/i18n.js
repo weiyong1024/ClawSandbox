@@ -23,6 +23,7 @@ const messages = {
     'card.stop':             '⏹ Stop',
     'card.start':            '▶ Start',
     'card.destroy':          '🗑 Destroy',
+    'card.unconfigured':     'Not configured',
 
     'create.title':          'Create Instances',
     'create.label':          'Number of instances',
@@ -145,6 +146,7 @@ const messages = {
     'card.stop':             '⏹ 停止',
     'card.start':            '▶ 启动',
     'card.destroy':          '🗑 销毁',
+    'card.unconfigured':     '未配置',
 
     'create.title':          '创建实例',
     'create.label':          '实例数量',

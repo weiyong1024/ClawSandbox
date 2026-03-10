@@ -121,6 +121,10 @@ func (s *Server) handleConfigureInstance(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	// Persist which asset IDs were used so the card and dialog can show them.
+	store.SetConfig(name, req.ModelAssetID, req.ChannelAssetID)
+	_ = store.Save()
+
 	writeJSON(w, http.StatusOK, map[string]any{
 		"data": map[string]string{
 			"status":  "configured",

@@ -75,6 +75,12 @@ func runDestroy(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("saving state: %w", err)
 		}
 
+		// Release any channel assigned to this instance so it becomes available again.
+		if assets, err := state.LoadAssets(); err == nil {
+			assets.ReleaseChannelByInstance(inst.Name)
+			_ = assets.SaveAssets()
+		}
+
 		if destroyPurge {
 			instanceDir := filepath.Join(dataDir, "data", inst.Name)
 			if err := os.RemoveAll(instanceDir); err != nil {

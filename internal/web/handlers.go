@@ -17,21 +17,36 @@ import (
 
 // instanceResponse is the JSON representation of a single instance.
 type instanceResponse struct {
-	Name      string    `json:"name"`
-	Status    string    `json:"status"`
-	NoVNC     int       `json:"novnc_port"`
-	Gateway   int       `json:"gateway_port"`
-	CreatedAt time.Time `json:"created_at"`
+	Name           string    `json:"name"`
+	Status         string    `json:"status"`
+	NoVNC          int       `json:"novnc_port"`
+	Gateway        int       `json:"gateway_port"`
+	CreatedAt      time.Time `json:"created_at"`
+	ModelAssetID   string    `json:"model_asset_id,omitempty"`
+	ChannelAssetID string    `json:"channel_asset_id,omitempty"`
+	ModelName      string    `json:"model_name,omitempty"`
+	ChannelName    string    `json:"channel_name,omitempty"`
 }
 
-func instanceToResponse(inst state.Instance) instanceResponse {
-	return instanceResponse{
-		Name:      inst.Name,
-		Status:    inst.Status,
-		NoVNC:     inst.Ports.NoVNC,
-		Gateway:   inst.Ports.Gateway,
-		CreatedAt: inst.CreatedAt,
+func instanceToResponse(inst state.Instance, assets *state.AssetStore) instanceResponse {
+	resp := instanceResponse{
+		Name:           inst.Name,
+		Status:         inst.Status,
+		NoVNC:          inst.Ports.NoVNC,
+		Gateway:        inst.Ports.Gateway,
+		CreatedAt:      inst.CreatedAt,
+		ModelAssetID:   inst.ModelAssetID,
+		ChannelAssetID: inst.ChannelAssetID,
 	}
+	if assets != nil {
+		if m := assets.GetModel(inst.ModelAssetID); m != nil {
+			resp.ModelName = m.Name
+		}
+		if c := assets.GetChannel(inst.ChannelAssetID); c != nil {
+			resp.ChannelName = c.Name
+		}
+	}
+	return resp
 }
 
 // handleListInstances returns all instances with live status from Docker.
@@ -42,13 +57,15 @@ func (s *Server) handleListInstances(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	assets, _ := s.loadAssets()
+
 	instances := store.Snapshot()
 	results := make([]instanceResponse, 0, len(instances))
 	for _, inst := range instances {
 		status, _, _ := container.Status(s.docker, inst.ContainerID)
 		store.SetStatus(inst.Name, status)
 		inst.Status = status
-		results = append(results, instanceToResponse(inst))
+		results = append(results, instanceToResponse(inst, assets))
 	}
 
 	_ = store.Save()
@@ -166,7 +183,7 @@ func (s *Server) handleCreateInstances(w http.ResponseWriter, r *http.Request) {
 		}
 
 		s.events.Publish(Event{Type: EventCreated, Name: name})
-		created = append(created, instanceToResponse(*inst))
+		created = append(created, instanceToResponse(*inst, nil))
 	}
 
 	writeJSON(w, http.StatusCreated, map[string]any{"data": created})
@@ -195,7 +212,7 @@ func (s *Server) handleStartInstance(w http.ResponseWriter, r *http.Request) {
 
 	inst.Status = "running"
 	s.events.Publish(Event{Type: EventStarted, Name: name})
-	writeJSON(w, http.StatusOK, map[string]any{"data": instanceToResponse(*inst)})
+	writeJSON(w, http.StatusOK, map[string]any{"data": instanceToResponse(*inst, nil)})
 }
 
 // handleStopInstance stops a running instance.
@@ -221,7 +238,7 @@ func (s *Server) handleStopInstance(w http.ResponseWriter, r *http.Request) {
 
 	inst.Status = "stopped"
 	s.events.Publish(Event{Type: EventStopped, Name: name})
-	writeJSON(w, http.StatusOK, map[string]any{"data": instanceToResponse(*inst)})
+	writeJSON(w, http.StatusOK, map[string]any{"data": instanceToResponse(*inst, nil)})
 }
 
 // handleDestroyInstance removes an instance and optionally purges data.
@@ -247,6 +264,12 @@ func (s *Server) handleDestroyInstance(w http.ResponseWriter, r *http.Request) {
 
 	store.Remove(name)
 	_ = store.Save()
+
+	// Release any channel assigned to this instance so it becomes available again.
+	if assets, err := s.loadAssets(); err == nil {
+		assets.ReleaseChannelByInstance(name)
+		_ = assets.SaveAssets()
+	}
 
 	if purge {
 		dataDir, _ := config.DataDir()

@@ -32,6 +32,26 @@ export function InstanceCard({ instance, stats, pending, onStart, onStop, onDest
         </div>
       </div>
 
+      <div class="card-config">
+        ${instance.model_name ? html`
+          <div class="config-item">
+            <span class="config-label">Model</span>
+            <span class="config-value">${instance.model_name}</span>
+          </div>
+        ` : ''}
+        ${instance.channel_name ? html`
+          <div class="config-item">
+            <span class="config-label">Channel</span>
+            <span class="config-value">${instance.channel_name}</span>
+          </div>
+        ` : ''}
+        ${!instance.model_name && !instance.channel_name ? html`
+          <div class="config-item">
+            <span class="config-value config-unconfigured">${t('card.unconfigured')}</span>
+          </div>
+        ` : ''}
+      </div>
+
       ${isRunning && stats && html`
         <div class="card-stats">
           <div class="stat-row">

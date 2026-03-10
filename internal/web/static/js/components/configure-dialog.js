@@ -2,11 +2,11 @@ import { html, useState, useEffect } from '../lib.js';
 import { useLang } from '../i18n.js';
 import { api } from '../api.js';
 
-export function ConfigureDialog({ instanceName, onClose, onConfigure }) {
+export function ConfigureDialog({ instanceName, currentModelAssetId, onClose, onConfigure }) {
   const { t } = useLang();
   const [models, setModels] = useState([]);
   const [channels, setChannels] = useState([]);
-  const [selectedModel, setSelectedModel] = useState('');
+  const [selectedModel, setSelectedModel] = useState(currentModelAssetId || '');
   const [selectedChannel, setSelectedChannel] = useState('');
   const [configuring, setConfiguring] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -18,6 +18,9 @@ export function ConfigureDialog({ instanceName, onClose, onConfigure }) {
     ]).then(([modelData, channelData]) => {
       setModels(modelData || []);
       setChannels(channelData || []);
+
+      // Pre-select model assigned to this instance
+      if (currentModelAssetId) setSelectedModel(currentModelAssetId);
 
       // Pre-select channel assigned to this instance
       const assignedCh = (channelData || []).find(c => c.used_by === instanceName);
