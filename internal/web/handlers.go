@@ -244,7 +244,9 @@ func (s *Server) handleStopInstance(w http.ResponseWriter, r *http.Request) {
 // handleDestroyInstance removes an instance and optionally purges data.
 func (s *Server) handleDestroyInstance(w http.ResponseWriter, r *http.Request) {
 	name := r.PathValue("name")
-	purge := r.URL.Query().Get("purge") == "true"
+	// Default: always purge data so recreated instances start fresh.
+	// Pass ?purge=false to explicitly preserve data.
+	purge := r.URL.Query().Get("purge") != "false"
 
 	store, err := s.loadStore()
 	if err != nil {
@@ -278,6 +280,75 @@ func (s *Server) handleDestroyInstance(w http.ResponseWriter, r *http.Request) {
 
 	s.events.Publish(Event{Type: EventDestroyed, Name: name})
 	writeJSON(w, http.StatusOK, map[string]any{"data": map[string]string{"name": name, "status": "destroyed"}})
+}
+
+// handleResetInstance purges the persisted OpenClaw config so the instance
+// can be reconfigured from scratch without destroying the container.
+func (s *Server) handleResetInstance(w http.ResponseWriter, r *http.Request) {
+	name := r.PathValue("name")
+
+	store, err := s.loadStore()
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	inst := store.Get(name)
+	if inst == nil {
+		writeError(w, http.StatusNotFound, fmt.Sprintf("instance %s not found", name))
+		return
+	}
+
+	// Stop openclaw gateway if running.
+	status, _, _ := container.Status(s.docker, inst.ContainerID)
+	if status == "running" {
+		_ = container.ExecAs(s.docker, inst.ContainerID, "root", []string{
+			"supervisorctl", "stop", "openclaw",
+		})
+	}
+
+	// Remove only OpenClaw config and auth data, preserving Node.js V8 caches
+	// and other runtime state to avoid slow JIT recompilation on next configure.
+	dataDir, err := config.DataDir()
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	instanceDataDir := filepath.Join(dataDir, "data", name, "openclaw")
+	for _, sub := range []string{
+		"openclaw.json",
+		"agents",
+		"sessions",
+		"channels",
+	} {
+		_ = os.RemoveAll(filepath.Join(instanceDataDir, sub))
+	}
+
+	// Release any channel assets assigned to this instance.
+	assets, err := s.loadAssets()
+	if err == nil {
+		assets.ReleaseChannelByInstance(name)
+		_ = assets.SaveAssets()
+	}
+
+	// Restart the container to clear Node.js runtime degradation that causes
+	// openclaw CLI commands to hang in long-running containers.
+	if status == "running" {
+		if err := container.Stop(s.docker, inst.ContainerID); err != nil {
+			writeError(w, http.StatusInternalServerError, fmt.Sprintf("restarting %s: %v", name, err))
+			return
+		}
+		if err := container.Start(s.docker, inst.ContainerID); err != nil {
+			writeError(w, http.StatusInternalServerError, fmt.Sprintf("restarting %s: %v", name, err))
+			return
+		}
+		store.SetStatus(name, "running")
+	}
+	_ = store.Save()
+
+	s.events.Publish(Event{Type: EventStopped, Name: name})
+	writeJSON(w, http.StatusOK, map[string]any{
+		"data": map[string]string{"name": name, "status": "reset"},
+	})
 }
 
 // handleInstanceLogs returns the last 100 lines of container logs.

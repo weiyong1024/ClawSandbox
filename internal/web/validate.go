@@ -129,6 +129,65 @@ func validateDiscord(token string) error {
 	return doValidationRequest(req, "Discord")
 }
 
+// resolveBotName calls the channel platform API to get the bot's display name.
+// Returns empty string on failure (non-critical — text @mention detection
+// simply won't work, but the bot still functions normally).
+func resolveBotName(channel, token string) string {
+	switch channel {
+	case "discord":
+		return resolveDiscordBotName(token)
+	case "slack":
+		return resolveSlackBotName(token)
+	default:
+		return ""
+	}
+}
+
+func resolveDiscordBotName(token string) string {
+	req, err := http.NewRequest("GET", "https://discord.com/api/v10/users/@me", nil)
+	if err != nil {
+		return ""
+	}
+	req.Header.Set("Authorization", "Bot "+token)
+	resp, err := httpClient.Do(req)
+	if err != nil || resp.StatusCode != http.StatusOK {
+		return ""
+	}
+	defer resp.Body.Close()
+	var result struct {
+		GlobalName string `json:"global_name"`
+		Username   string `json:"username"`
+	}
+	if json.NewDecoder(resp.Body).Decode(&result) != nil {
+		return ""
+	}
+	if result.GlobalName != "" {
+		return result.GlobalName
+	}
+	return result.Username
+}
+
+func resolveSlackBotName(token string) string {
+	req, err := http.NewRequest("POST", "https://slack.com/api/auth.test", nil)
+	if err != nil {
+		return ""
+	}
+	req.Header.Set("Authorization", "Bearer "+token)
+	resp, err := httpClient.Do(req)
+	if err != nil || resp.StatusCode != http.StatusOK {
+		return ""
+	}
+	defer resp.Body.Close()
+	var result struct {
+		OK   bool   `json:"ok"`
+		User string `json:"user"`
+	}
+	if json.NewDecoder(resp.Body).Decode(&result) != nil || !result.OK {
+		return ""
+	}
+	return result.User
+}
+
 func validateSlack(token string) error {
 	req, err := http.NewRequest("POST", "https://slack.com/api/auth.test", nil)
 	if err != nil {

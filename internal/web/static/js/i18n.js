@@ -53,8 +53,12 @@ const messages = {
     'action.stopping':       'Stopping...',
     'action.destroying':     'Destroying...',
     'action.configuring':    'Configuring...',
+    'action.resetting':      'Resetting...',
 
     'card.configure':        'Configure',
+    'card.reset':            'Reset',
+    'toast.reset':           (name) => `${name} reset successfully`,
+    'confirm.reset':         (name) => `Reset ${name}? This clears all configuration and channel assignments.`,
 
     'configure.title':       'Configure Instance',
     'configure.provider':    'Provider',
@@ -73,6 +77,7 @@ const messages = {
     'configure.channelConfig': 'Channel Config (optional)',
     'configure.noModels':    'No model configs available. Add one in Assets → Model Config.',
     'configure.noChannel':   'None',
+    'configure.timeHint':    'This may take 1–2 minutes. Please do not close the dialog.',
     'configure.unavailableModels': (n) => `${n} more config(s) used by other instances`,
 
     // Assets
@@ -176,8 +181,12 @@ const messages = {
     'action.stopping':       '停止中...',
     'action.destroying':     '销毁中...',
     'action.configuring':    '配置中...',
+    'action.resetting':      '重置中...',
 
     'card.configure':        '配置',
+    'card.reset':            '重置',
+    'toast.reset':           (name) => `${name} 已重置`,
+    'confirm.reset':         (name) => `确定重置 ${name}？这将清除所有配置和 Channel 绑定。`,
 
     'configure.title':       '配置实例',
     'configure.provider':    '提供商',
@@ -196,6 +205,7 @@ const messages = {
     'configure.channelConfig': 'Channel 配置（可选）',
     'configure.noModels':    '暂无可用的 Model 配置。请先在「资产管理 → Model 配置」中添加。',
     'configure.noChannel':   '无',
+    'configure.timeHint':    '配置大约需要 1–2 分钟，请勿关闭此对话框。',
     'configure.unavailableModels': (n) => `另有 ${n} 个配置已被其他实例使用`,
 
     // Assets

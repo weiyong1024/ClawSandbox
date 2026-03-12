@@ -18,6 +18,7 @@ type ConfigureParams struct {
 	Model        string // e.g. "claude-sonnet-4-6"
 	Channel      string // e.g. "telegram"
 	ChannelToken string // bot token
+	BotName      string // bot display name for text @mention detection
 }
 
 // Configure runs openclaw CLI commands inside the container to set up the instance.
@@ -99,14 +100,29 @@ func Configure(cli *docker.Client, p ConfigureParams) error {
 			return fmt.Errorf("supervisorctl stop before policies: %w", err)
 		}
 
-		// Set DM and group policies to "open" so the bot responds
-		// without pairing. allowFrom must include "*" when policy is "open".
+		// Set policies to "open" so the bot responds without pairing.
+		// allowFrom must include "*" when policy is "open".
+		// Note: groupAllowFrom is only supported by some channels (e.g. Telegram)
+		// but not others (e.g. Discord), so we set it only when applicable.
 		channelCfg := fmt.Sprintf("channels.%s", p.Channel)
 		policySteps := []struct{ path, value string }{
 			{channelCfg + ".allowFrom", `["*"]`},
 			{channelCfg + ".dmPolicy", "open"},
-			{channelCfg + ".groupAllowFrom", `["*"]`},
 			{channelCfg + ".groupPolicy", "open"},
+		}
+		if p.Channel == "telegram" {
+			policySteps = append(policySteps, struct{ path, value string }{
+				channelCfg + ".groupAllowFrom", `["*"]`,
+			})
+		}
+		// Step 7b: enable bot-to-bot communication for channels that support it.
+		// "mentions" mode: only process bot messages that @mention this bot,
+		// which enables directed bot-to-bot conversation while preventing
+		// infinite reply loops from unmentioned bot chatter.
+		if p.Channel == "discord" || p.Channel == "slack" {
+			policySteps = append(policySteps, struct{ path, value string }{
+				channelCfg + ".allowBots", "mentions",
+			})
 		}
 		for _, s := range policySteps {
 			args := []string{"openclaw", "config", "set", s.path, s.value}
@@ -119,7 +135,21 @@ func Configure(cli *docker.Client, p ConfigureParams) error {
 			}
 		}
 
-		// Step 8: start gateway with the complete, final config.
+		// Step 8: set agent identity name for text @mention detection.
+		// This enables bot-to-bot communication: when Bot-A sends "@Bot-B",
+		// OpenClaw on Bot-B matches it via mentionPatterns regex derived
+		// from the identity name, even though it's not a native platform mention.
+		// Identity lives under agents.list[].identity, not agents.defaults.
+		if p.BotName != "" {
+			agentsList := fmt.Sprintf(`[{"id":"main","identity":{"name":"%s"}}]`, p.BotName)
+			if err := dockerExecAs(cli, p.ContainerID, "node", []string{
+				"openclaw", "config", "set", "agents.list", agentsList, "--strict-json",
+			}); err != nil {
+				return fmt.Errorf("config set agents.list: %w", err)
+			}
+		}
+
+		// Step 9: start gateway with the complete, final config.
 		if err := dockerExecAs(cli, p.ContainerID, "root", []string{
 			"supervisorctl", "start", "openclaw",
 		}); err != nil {
@@ -222,6 +252,11 @@ func ConfigStatus(cli *docker.Client, containerID string) (*ConfigInfo, error) {
 	}
 
 	return info, nil
+}
+
+// ExecAs runs a command inside a container as the specified user (public wrapper).
+func ExecAs(cli *docker.Client, containerID, user string, cmd []string) error {
+	return dockerExecAs(cli, containerID, user, cmd)
 }
 
 // dockerExecAs runs a command inside a container as the specified user.

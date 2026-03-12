@@ -135,6 +135,18 @@ function App() {
     })();
   };
 
+  const onReset = async (name) => {
+    if (!confirm(t('confirm.reset', name))) return;
+    await withPending(name, 'resetting', async () => {
+      try {
+        await api.resetInstance(name);
+        addToast(t('toast.reset', name), 'success');
+      } catch (err) {
+        addToast(err.message, 'error');
+      }
+    })();
+  };
+
   const onConfigure = async (name, config) => {
     try {
       await api.configureInstance(name, config);
@@ -200,6 +212,7 @@ function App() {
           onDestroy=${onDestroy}
           onDesktop=${navigate}
           onConfigure=${(name) => setConfigureName(name)}
+          onReset=${onReset}
           onCreateClick=${() => setShowCreate(true)}
         />
       `;

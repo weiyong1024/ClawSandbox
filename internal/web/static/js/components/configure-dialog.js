@@ -106,7 +106,8 @@ export function ConfigureDialog({ instanceName, currentModelAssetId, onClose, on
               </div>
             </div>
             <div class="dialog-footer">
-              <button type="button" class="btn btn-ghost" onClick=${onClose}>${t('configure.cancel')}</button>
+              ${configuring && html`<span class="form-hint" style="margin-right:auto">${t('configure.timeHint')}</span>`}
+              <button type="button" class="btn btn-ghost" onClick=${onClose} disabled=${configuring}>${t('configure.cancel')}</button>
               <button type="submit" class="btn btn-primary" disabled=${configuring || !selectedModel}>
                 ${configuring ? t('configure.configuring') : t('configure.submit')}
               </button>

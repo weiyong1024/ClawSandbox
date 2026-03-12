@@ -23,7 +23,8 @@ export const api = {
   createInstances:(count)       => request('POST',   '/instances', { count }),
   startInstance:  (name)        => request('POST',   `/instances/${encodeURIComponent(name)}/start`),
   stopInstance:   (name)        => request('POST',   `/instances/${encodeURIComponent(name)}/stop`),
-  destroyInstance:(name, purge) => request('DELETE',  `/instances/${encodeURIComponent(name)}${purge ? '?purge=true' : ''}`),
+  destroyInstance:(name)        => request('DELETE',  `/instances/${encodeURIComponent(name)}`),
+  resetInstance:  (name)        => request('POST',   `/instances/${encodeURIComponent(name)}/reset`),
   configureInstance: (name, config) => request('POST', `/instances/${encodeURIComponent(name)}/configure`, config),
   getConfigStatus:   (name)        => request('GET',  `/instances/${encodeURIComponent(name)}/configure/status`),
 

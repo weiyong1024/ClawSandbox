@@ -109,6 +109,12 @@ func (s *Server) handleConfigureInstance(w http.ResponseWriter, r *http.Request)
 		_ = store.Save()
 	}
 
+	// Resolve bot display name from the channel platform for text @mention detection.
+	var botName string
+	if req.Channel != "" && req.ChannelToken != "" {
+		botName = resolveBotName(req.Channel, req.ChannelToken)
+	}
+
 	if err := container.Configure(s.docker, container.ConfigureParams{
 		ContainerID:  inst.ContainerID,
 		Provider:     req.Provider,
@@ -116,6 +122,7 @@ func (s *Server) handleConfigureInstance(w http.ResponseWriter, r *http.Request)
 		Model:        req.Model,
 		Channel:      req.Channel,
 		ChannelToken: req.ChannelToken,
+		BotName:      botName,
 	}); err != nil {
 		writeError(w, http.StatusInternalServerError, fmt.Sprintf("configure failed: %v", err))
 		return
