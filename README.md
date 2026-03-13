@@ -6,7 +6,7 @@
 
 ---
 
-**You don't need a dedicated server.** If you have a Mac with Apple Silicon, ClawSandbox lets you:
+**No cloud servers, no new hardware — everything runs on the machine you already have.** If you have a Mac with Apple Silicon, ClawSandbox lets you:
 
 - **Deploy OpenClaw in minutes** — fully sandboxed in Docker, completely isolated from everything else on your machine
 - **Run as many as you want** — spin up an entire fleet of OpenClaw instances and experience a one-person company powered by AI
@@ -66,17 +66,17 @@ clawsandbox dashboard serve
 
 Click **"System → Image"** in the Dashboard and build the sandbox image (~1.4 GB, first build takes several minutes).
 
-### 4. Run Your Company
+### 4. Run Your Lobster Company
 
 Think of ClawSandbox as **your AI company**. Assets are the tools and resources your company owns; Fleet is your team of AI employees. You assign different tools to different employees, and put your AI workforce into production.
 
 #### Stock your toolbox
 
-**Assets → Models** — register LLM API keys. These are the "brains" your employees think with. Each model is validated before saving.
+**Assets → Models** — register LLM API keys. These are the "brains" your employees think with. Each model is validated before saving. For step-by-step setup, see the provider guides: [Anthropic](https://github.com/weiyong1024/ClawSandbox/wiki/Provider-Anthropic) | [OpenAI](https://github.com/weiyong1024/ClawSandbox/wiki/Provider-OpenAI) | [Google](https://github.com/weiyong1024/ClawSandbox/wiki/Provider-Google) | [DeepSeek](https://github.com/weiyong1024/ClawSandbox/wiki/Provider-DeepSeek)
 
 ![Models](docs/images/assets-models.png)
 
-**Assets → Channels** — connect messaging platforms (Telegram, Discord, Slack, etc.). These are the "workstations" where your employees serve customers. Optional; validated before saving.
+**Assets → Channels** — connect messaging platforms (Telegram, Discord, Slack, etc.). These are the "workstations" where your employees serve customers. Optional; validated before saving. For step-by-step setup, see the channel guides: [Telegram](https://github.com/weiyong1024/ClawSandbox/wiki/Channel-Telegram) | [Discord](https://github.com/weiyong1024/ClawSandbox/wiki/Channel-Discord) | [Slack](https://github.com/weiyong1024/ClawSandbox/wiki/Channel-Slack) | [Lark](https://github.com/weiyong1024/ClawSandbox/wiki/Channel-Lark)
 
 ![Channels](docs/images/assets-channels.png)
 
@@ -84,13 +84,13 @@ Think of ClawSandbox as **your AI company**. Assets are the tools and resources 
 
 **Fleet → Create** — spin up OpenClaw instances. Each one is a new employee joining your company.
 
-**Fleet → Configure** — assign a model and channel from your asset pool to each instance. Different employees can use different tools for different jobs.
+**Fleet → Configure** — assign a model and channel from your asset pool to each instance. Different employees can use different tools for different jobs. See [Dashboard Guide — Fleet Management](https://github.com/weiyong1024/ClawSandbox/wiki/Dashboard-Guide#fleet-management) for details.
 
 ![Fleet](docs/images/fleet.png)
 
 #### Save & clone your employees' souls
 
-Once an employee is trained and performing well, save their soul — personality, memory, model config, and conversation history — so you can clone them instantly.
+Once an employee is trained and performing well, save their soul — personality, memory, model config, and conversation history — so you can clone them instantly. See [Soul Archive](https://github.com/weiyong1024/ClawSandbox/wiki/Soul-Archive) for full documentation.
 
 **Fleet → Save Soul** — click on any configured instance to save its soul to the archive.
 
@@ -119,7 +119,7 @@ See the **[Wiki](https://github.com/weiyong1024/ClawSandbox/wiki)** for full doc
 - Channel guides — [Telegram](https://github.com/weiyong1024/ClawSandbox/wiki/Channel-Telegram) | [Discord](https://github.com/weiyong1024/ClawSandbox/wiki/Channel-Discord) | [Slack](https://github.com/weiyong1024/ClawSandbox/wiki/Channel-Slack) | [Lark](https://github.com/weiyong1024/ClawSandbox/wiki/Channel-Lark)
 - [CLI Reference](https://github.com/weiyong1024/ClawSandbox/wiki/CLI-Reference) | [FAQ](https://github.com/weiyong1024/ClawSandbox/wiki/FAQ)
 
-## CLI Reference
+## CLI Reference (for developers)
 
 Every command supports `--help` for detailed usage and examples:
 

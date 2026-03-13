@@ -6,7 +6,7 @@
 
 ---
 
-**不需要额外买一台 Mac Mini。** 只要你有一台 Apple Silicon 的 Mac，ClawSandbox 就能让你：
+**不用买云服务器，不用添置新硬件，一切在你当前的工作机上完成。** 只要你有一台 Apple Silicon 的 Mac，ClawSandbox 就能让你：
 
 - **几分钟部署 OpenClaw** — 完全运行在 Docker 沙箱中，与电脑上的现有资源彻底隔离
 - **想部署多少就部署多少** — 一键拉起 OpenClaw 军团，体验 AI 驱动的一人公司
@@ -66,17 +66,17 @@ clawsandbox dashboard serve
 
 在仪表盘中点击 **「系统 → 镜像管理」**，构建沙箱镜像（约 1.4 GB，首次构建需要几分钟）。
 
-### 4. 经营你的公司
+### 4. 经营你的龙虾公司
 
 把 ClawSandbox 想象成**你的 AI 公司**。资产管理是公司的工具仓库，Fleet 是你的 AI 员工团队。给不同员工分配不同的工具，让你的 AI 团队投入生产。
 
 #### 备好工具库
 
-**资产管理 → Model 配置** — 注册 LLM API Key，这是员工用来思考的「大脑」。保存前自动验证。
+**资产管理 → Model 配置** — 注册 LLM API Key，这是员工用来思考的「大脑」。保存前自动验证。详细配置见各提供商指南：[Anthropic](https://github.com/weiyong1024/ClawSandbox/wiki/Provider-Anthropic) | [OpenAI](https://github.com/weiyong1024/ClawSandbox/wiki/Provider-OpenAI) | [Google](https://github.com/weiyong1024/ClawSandbox/wiki/Provider-Google) | [DeepSeek](https://github.com/weiyong1024/ClawSandbox/wiki/Provider-DeepSeek)
 
 ![Model 配置](docs/images/assets-models.png)
 
-**资产管理 → Channel 配置** — 接入消息平台（Telegram、Discord、Slack 等），这是员工服务客户的「工位」。可选；保存前自动验证。
+**资产管理 → Channel 配置** — 接入消息平台（Telegram、Discord、Slack 等），这是员工服务客户的「工位」。可选；保存前自动验证。详细配置见各频道指南：[Telegram](https://github.com/weiyong1024/ClawSandbox/wiki/Channel-Telegram) | [Discord](https://github.com/weiyong1024/ClawSandbox/wiki/Channel-Discord) | [Slack](https://github.com/weiyong1024/ClawSandbox/wiki/Channel-Slack) | [Lark](https://github.com/weiyong1024/ClawSandbox/wiki/Channel-Lark)
 
 ![Channel 配置](docs/images/assets-channels.png)
 
@@ -84,13 +84,13 @@ clawsandbox dashboard serve
 
 **实例管理 → 创建实例** — 创建 OpenClaw 实例，每一个都是加入公司的新员工。
 
-**实例管理 → 配置** — 从资产池为每个实例分配 Model 和 Channel。不同员工可以使用不同的工具，承担不同的任务。
+**实例管理 → 配置** — 从资产池为每个实例分配 Model 和 Channel。不同员工可以使用不同的工具，承担不同的任务。详见 [仪表盘指南 — 实例管理](https://github.com/weiyong1024/ClawSandbox/wiki/Dashboard-Guide#fleet-management)。
 
 ![实例管理](docs/images/fleet.png)
 
 #### 保存与克隆员工的灵魂
 
-当一个员工被训练得足够好时，可以保存它的灵魂——人格、记忆、模型配置和对话历史——以便随时克隆。
+当一个员工被训练得足够好时，可以保存它的灵魂——人格、记忆、模型配置和对话历史——以便随时克隆。详见 [灵魂存档](https://github.com/weiyong1024/ClawSandbox/wiki/Soul-Archive)。
 
 **实例管理 → 灵魂保存** — 点击任意已配置实例，将其灵魂保存到存档。
 
@@ -119,7 +119,7 @@ clawsandbox dashboard serve
 - 频道指南 — [Telegram](https://github.com/weiyong1024/ClawSandbox/wiki/Channel-Telegram) | [Discord](https://github.com/weiyong1024/ClawSandbox/wiki/Channel-Discord) | [Slack](https://github.com/weiyong1024/ClawSandbox/wiki/Channel-Slack) | [Lark](https://github.com/weiyong1024/ClawSandbox/wiki/Channel-Lark)
 - [CLI 参考](https://github.com/weiyong1024/ClawSandbox/wiki/CLI-Reference) | [常见问题](https://github.com/weiyong1024/ClawSandbox/wiki/FAQ)
 
-## CLI 命令
+## CLI 命令（面向开发者）
 
 任何命令都可以加 `--help` 查看详细用法和示例：
 
