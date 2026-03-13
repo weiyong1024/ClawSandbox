@@ -12,6 +12,7 @@ import (
 	"github.com/weiyong1024/clawsandbox/internal/config"
 	"github.com/weiyong1024/clawsandbox/internal/container"
 	"github.com/weiyong1024/clawsandbox/internal/port"
+	"github.com/weiyong1024/clawsandbox/internal/snapshot"
 	"github.com/weiyong1024/clawsandbox/internal/state"
 )
 
@@ -74,7 +75,8 @@ func (s *Server) handleListInstances(w http.ResponseWriter, r *http.Request) {
 
 // createRequest is the JSON body for POST /api/v1/instances.
 type createRequest struct {
-	Count int `json:"count"`
+	Count        int    `json:"count"`
+	SnapshotName string `json:"snapshot_name,omitempty"`
 }
 
 // handleCreateInstances creates N new instances.
@@ -150,6 +152,14 @@ func (s *Server) handleCreateInstances(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		// Load snapshot data if specified
+		if req.SnapshotName != "" {
+			if err := snapshot.Load(req.SnapshotName, instanceDataDir); err != nil {
+				writeError(w, http.StatusInternalServerError, fmt.Sprintf("loading snapshot: %v", err))
+				return
+			}
+		}
+
 		containerID, err := container.Create(s.docker, container.CreateParams{
 			Name:        name,
 			ImageRef:    cfg.ImageRef(),
@@ -180,6 +190,17 @@ func (s *Server) handleCreateInstances(w http.ResponseWriter, r *http.Request) {
 		if err := store.Save(); err != nil {
 			writeError(w, http.StatusInternalServerError, err.Error())
 			return
+		}
+
+		// Associate model asset from snapshot if available
+		if req.SnapshotName != "" {
+			if snapStore, loadErr := s.loadSnapshots(); loadErr == nil {
+				if snapMeta := snapStore.GetByName(req.SnapshotName); snapMeta != nil && snapMeta.ModelAssetID != "" {
+					store.SetConfig(name, snapMeta.ModelAssetID, "")
+					_ = store.Save()
+					inst.ModelAssetID = snapMeta.ModelAssetID
+				}
+			}
 		}
 
 		s.events.Publish(Event{Type: EventCreated, Name: name})
@@ -319,6 +340,7 @@ func (s *Server) handleResetInstance(w http.ResponseWriter, r *http.Request) {
 		"agents",
 		"sessions",
 		"channels",
+		".configured",
 	} {
 		_ = os.RemoveAll(filepath.Join(instanceDataDir, sub))
 	}

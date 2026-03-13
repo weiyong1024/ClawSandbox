@@ -11,11 +11,15 @@ import { ConfigureDialog } from './components/configure-dialog.js';
 import { ModelAssets } from './components/model-assets.js';
 import { ChannelAssets } from './components/channel-assets.js';
 import { ImagePage } from './components/image-page.js';
+import { Snapshots } from './components/snapshots.js';
+import { SnapshotDialog } from './components/snapshot-dialog.js';
 import { ToastContainer, useToast } from './components/toast.js';
 import { ConnectionStatus } from './components/connection-status.js';
 
 function parseRoute(hash) {
   if (!hash || hash === '#/' || hash === '#') return { page: 'fleet', route: '#/fleet' };
+
+  if (hash === '#/fleet/snapshots') return { page: 'snapshots', route: '#/fleet/snapshots' };
 
   const fleetMatch = hash.match(/^#\/fleet\/(.+)$/);
   if (fleetMatch) return { page: 'desktop', name: decodeURIComponent(fleetMatch[1]), route: '#/fleet' };
@@ -42,6 +46,7 @@ function App() {
   const [pending, setPending] = useState({});
   const [connected, setConnected] = useState(true);
   const [configureName, setConfigureName] = useState(null);
+  const [snapshotName, setSnapshotName] = useState(null);
   const { toasts, addToast, removeToast } = useToast();
 
   useEffect(() => {
@@ -94,9 +99,9 @@ function App() {
     try { await fn(); } finally { setPending(p => { const n = { ...p }; delete n[name]; return n; }); }
   };
 
-  const onCreate = async (count) => {
+  const onCreate = async (count, snapshotName) => {
     try {
-      await api.createInstances(count);
+      await api.createInstances(count, snapshotName);
       addToast(t('toast.created', count), 'success');
       setShowCreate(false);
     } catch (err) {
@@ -135,16 +140,8 @@ function App() {
     })();
   };
 
-  const onReset = async (name) => {
-    if (!confirm(t('confirm.reset', name))) return;
-    await withPending(name, 'resetting', async () => {
-      try {
-        await api.resetInstance(name);
-        addToast(t('toast.reset', name), 'success');
-      } catch (err) {
-        addToast(err.message, 'error');
-      }
-    })();
+  const onSnapshot = (name) => {
+    setSnapshotName(name);
   };
 
   const onConfigure = async (name, config) => {
@@ -152,6 +149,7 @@ function App() {
       await api.configureInstance(name, config);
       addToast(t('configure.success', name), 'success');
       setConfigureName(null);
+      refresh();
     } catch (err) {
       addToast(err.message, 'error');
     }
@@ -161,10 +159,11 @@ function App() {
     const onKey = (e) => {
       if (e.key === 'Escape' && showCreate) setShowCreate(false);
       if (e.key === 'Escape' && configureName) setConfigureName(null);
+      if (e.key === 'Escape' && snapshotName) setSnapshotName(null);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [showCreate, configureName]);
+  }, [showCreate, configureName, snapshotName]);
 
   const currentInstance = view.page === 'desktop'
     ? instances.find(i => i.name === view.name)
@@ -199,6 +198,9 @@ function App() {
     case 'image':
       content = html`<${ImagePage} addToast=${addToast} />`;
       break;
+    case 'snapshots':
+      content = html`<${Snapshots} addToast=${addToast} />`;
+      break;
     case 'fleet':
     default:
       content = html`
@@ -212,7 +214,7 @@ function App() {
           onDestroy=${onDestroy}
           onDesktop=${navigate}
           onConfigure=${(name) => setConfigureName(name)}
-          onReset=${onReset}
+          onSnapshot=${onSnapshot}
           onCreateClick=${() => setShowCreate(true)}
         />
       `;
@@ -236,6 +238,13 @@ function App() {
         currentModelAssetId=${(instances.find(i => i.name === configureName) || {}).model_asset_id || ''}
         onClose=${() => setConfigureName(null)}
         onConfigure=${onConfigure}
+      />
+    `}
+    ${snapshotName && html`
+      <${SnapshotDialog}
+        instanceName=${snapshotName}
+        onClose=${() => setSnapshotName(null)}
+        addToast=${addToast}
       />
     `}
     <${ToastContainer} toasts=${toasts} onDismiss=${removeToast} />

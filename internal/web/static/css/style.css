@@ -186,6 +186,20 @@ body {
 }
 .btn-configure:hover:not(:disabled) { background: rgba(168, 130, 255, 0.22); }
 
+.btn-snapshot {
+  background: rgba(45, 212, 191, 0.12);
+  color: #2dd4bf;
+  border: 1px solid rgba(45, 212, 191, 0.2);
+}
+.btn-snapshot:hover:not(:disabled) { background: rgba(45, 212, 191, 0.22); }
+
+.btn-reset {
+  background: rgba(251, 146, 60, 0.12);
+  color: #fb923c;
+  border: 1px solid rgba(251, 146, 60, 0.2);
+}
+.btn-reset:hover:not(:disabled) { background: rgba(251, 146, 60, 0.22); }
+
 .btn-ghost {
   background: transparent;
   color: var(--text-dim);

@@ -160,6 +160,13 @@ func Configure(cli *docker.Client, p ConfigureParams) error {
 		}
 	}
 
+	// Write .configured marker so gateway auto-starts on container restart.
+	if err := dockerExecAs(cli, p.ContainerID, "node", []string{
+		"touch", "/home/node/.openclaw/.configured",
+	}); err != nil {
+		return fmt.Errorf("writing .configured marker: %w", err)
+	}
+
 	return nil
 }
 

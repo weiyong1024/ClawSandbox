@@ -1,16 +1,23 @@
-import { html, useState } from '../lib.js';
+import { html, useState, useEffect } from '../lib.js';
 import { useLang } from '../i18n.js';
+import { api } from '../api.js';
 
 export function CreateDialog({ onClose, onCreate }) {
   const { t } = useLang();
   const [count, setCount] = useState(1);
   const [creating, setCreating] = useState(false);
+  const [snapshots, setSnapshots] = useState([]);
+  const [selectedSnapshot, setSelectedSnapshot] = useState('');
+
+  useEffect(() => {
+    api.listSnapshots().then(data => setSnapshots(data || [])).catch(() => {});
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setCreating(true);
     try {
-      await onCreate(count);
+      await onCreate(count, selectedSnapshot || undefined);
     } finally {
       setCreating(false);
     }
@@ -37,6 +44,17 @@ export function CreateDialog({ onClose, onCreate }) {
                 autofocus
               />
             </label>
+            ${snapshots.length > 0 && html`
+              <label class="form-label">
+                ${t('create.snapshot')}
+                <select class="form-input" value=${selectedSnapshot} onChange=${(e) => setSelectedSnapshot(e.target.value)}>
+                  <option value="">${t('create.noSnapshot')}</option>
+                  ${snapshots.map(s => html`
+                    <option key=${s.id} value=${s.name}>${s.name}</option>
+                  `)}
+                </select>
+              </label>
+            `}
             <p class="form-hint">${t('create.hint')}</p>
           </div>
           <div class="dialog-footer">

@@ -29,6 +29,7 @@ func Execute() {
 		dashboardCmd,
 		configCmd,
 		configureCmd,
+		snapshotCmd,
 		versionCmd,
 	)
 

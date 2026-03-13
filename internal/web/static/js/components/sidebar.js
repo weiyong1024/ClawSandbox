@@ -16,6 +16,7 @@ export function Sidebar({ currentRoute, onNavigate }) {
       label: t('sidebar.fleet'),
       items: [
         { route: '#/fleet', label: t('sidebar.instances'), icon: '🦞' },
+        { route: '#/fleet/snapshots', label: t('sidebar.snapshots'), icon: '📸' },
       ],
     },
     {

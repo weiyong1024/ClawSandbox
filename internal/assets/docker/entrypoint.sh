@@ -13,4 +13,13 @@ if [ -n "$VNC_PASSWORD" ]; then
     chown node:node /home/node/.vnc/passwd
 fi
 
+# If previously configured, auto-start the openclaw gateway.
+if [ -f /home/node/.openclaw/.configured ]; then
+    mkdir -p /etc/supervisor/conf.d
+    cat > /etc/supervisor/conf.d/openclaw-autostart.conf <<'OVERRIDE'
+[program:openclaw]
+autostart=true
+OVERRIDE
+fi
+
 exec /usr/bin/supervisord -n -c /etc/supervisor/supervisord.conf

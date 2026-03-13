@@ -20,7 +20,7 @@ async function request(method, path, body) {
 export const api = {
   // Instances
   listInstances:  ()            => request('GET',    '/instances'),
-  createInstances:(count)       => request('POST',   '/instances', { count }),
+  createInstances:(count, snapshotName) => request('POST', '/instances', { count, ...(snapshotName && { snapshot_name: snapshotName }) }),
   startInstance:  (name)        => request('POST',   `/instances/${encodeURIComponent(name)}/start`),
   stopInstance:   (name)        => request('POST',   `/instances/${encodeURIComponent(name)}/stop`),
   destroyInstance:(name)        => request('DELETE',  `/instances/${encodeURIComponent(name)}`),
@@ -44,4 +44,9 @@ export const api = {
   updateChannelAsset: (id, data)   => request('PUT',    `/assets/channels/${encodeURIComponent(id)}`, data),
   deleteChannelAsset: (id)         => request('DELETE', `/assets/channels/${encodeURIComponent(id)}`),
   testChannelAsset:   (data)       => request('POST',   '/assets/channels/test', data),
+
+  // Snapshots
+  listSnapshots:  ()     => request('GET',    '/snapshots'),
+  createSnapshot: (data) => request('POST',   '/snapshots', data),
+  deleteSnapshot: (id)   => request('DELETE', `/snapshots/${encodeURIComponent(id)}`),
 };

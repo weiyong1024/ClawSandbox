@@ -33,10 +33,10 @@ export function InstanceDesktop({ instance, stats, pending, onStart, onStop, onB
         <div class="desktop-actions">
           ${isRunning
             ? html`<button class="btn btn-sm btn-warning" disabled=${busy} onClick=${() => onStop(instance.name)}>
-                ${pending === 'stopping' ? t('action.stopping') : t('card.stop')}
+                ${pending === 'stopping' ? t('action.stopping') : t('card.suspend')}
               </button>`
             : html`<button class="btn btn-sm btn-success" disabled=${busy} onClick=${() => onStart(instance.name)}>
-                ${pending === 'starting' ? t('action.starting') : t('card.start')}
+                ${pending === 'starting' ? t('action.starting') : t('card.resume')}
               </button>`
           }
           <a class="btn btn-sm btn-desktop" href=${novncUrl} target="_blank" rel="noopener">${t('desktop.newTab')}</a>

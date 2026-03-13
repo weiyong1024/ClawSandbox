@@ -32,6 +32,11 @@ func (s *Server) registerRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("DELETE /api/v1/assets/channels/{id}", s.handleDeleteChannelAsset)
 	mux.HandleFunc("POST /api/v1/assets/channels/test", s.handleTestChannelAsset)
 
+	// Snapshots
+	mux.HandleFunc("GET /api/v1/snapshots", s.handleListSnapshots)
+	mux.HandleFunc("POST /api/v1/snapshots", s.handleCreateSnapshot)
+	mux.HandleFunc("DELETE /api/v1/snapshots/{id}", s.handleDeleteSnapshot)
+
 	// WebSocket endpoints
 	mux.HandleFunc("GET /api/v1/ws/stats", s.handleWSStats)
 	mux.HandleFunc("GET /api/v1/ws/logs/{name}", s.handleWSLogs)

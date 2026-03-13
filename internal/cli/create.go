@@ -12,10 +12,12 @@ import (
 	"github.com/weiyong1024/clawsandbox/internal/config"
 	"github.com/weiyong1024/clawsandbox/internal/container"
 	"github.com/weiyong1024/clawsandbox/internal/port"
+	"github.com/weiyong1024/clawsandbox/internal/snapshot"
 	"github.com/weiyong1024/clawsandbox/internal/state"
 )
 
 var pullFlag bool
+var fromSnapshotFlag string
 
 var createCmd = &cobra.Command{
 	Use:     "create <N>",
@@ -27,6 +29,7 @@ var createCmd = &cobra.Command{
 
 func init() {
 	createCmd.Flags().BoolVar(&pullFlag, "pull", false, "Pull image from registry if not found locally")
+	createCmd.Flags().StringVar(&fromSnapshotFlag, "from-snapshot", "", "Create instance from a saved snapshot")
 }
 
 func runCreate(cmd *cobra.Command, args []string) error {
@@ -110,6 +113,13 @@ func runCreate(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("creating data dir for %s: %w", name, err)
 		}
 
+		// Load snapshot data if specified
+		if fromSnapshotFlag != "" {
+			if err := snapshot.Load(fromSnapshotFlag, instanceDataDir); err != nil {
+				return fmt.Errorf("loading snapshot: %w", err)
+			}
+		}
+
 		fmt.Printf("Creating %s ... ", name)
 
 		containerID, err := container.Create(cli, container.CreateParams{
@@ -141,6 +151,16 @@ func runCreate(cmd *cobra.Command, args []string) error {
 		store.Add(inst)
 		if err := store.Save(); err != nil {
 			return fmt.Errorf("saving state: %w", err)
+		}
+
+		// Associate model asset from snapshot if available
+		if fromSnapshotFlag != "" {
+			if snapStore, err := state.LoadSnapshots(); err == nil {
+				if snapMeta := snapStore.GetByName(fromSnapshotFlag); snapMeta != nil && snapMeta.ModelAssetID != "" {
+					store.SetConfig(name, snapMeta.ModelAssetID, "")
+					_ = store.Save()
+				}
+			}
 		}
 
 		fmt.Printf("✓  desktop: http://localhost:%d\n", novncPort)

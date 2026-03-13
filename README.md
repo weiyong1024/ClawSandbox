@@ -31,6 +31,8 @@ OpenClaw is a self-hosted personal AI assistant that connects to 20+ messaging p
 - **Web Dashboard** — manage your entire fleet from a browser with real-time stats, one-click actions, and embedded noVNC desktops
 - **Full desktop per instance** — each claw runs in its own Docker container with an XFCE desktop, accessible via noVNC
 - **Lifecycle management** — create, start, stop, restart, and destroy instances via CLI or Dashboard
+- **Soul Archive** — save a configured instance's soul (personality, memory, model config) and clone it to new instances instantly
+- **Auto-recovery** — configured instances automatically restart their gateway after container restarts
 - **Data persistence** — each instance's data survives container restarts
 - **Resource isolation** — instances are isolated from your host system and from each other
 
@@ -86,6 +88,22 @@ Think of ClawSandbox as **your AI company**. Assets are the tools and resources 
 
 ![Fleet](docs/images/fleet.png)
 
+#### Save & clone your employees' souls
+
+Once an employee is trained and performing well, save their soul — personality, memory, model config, and conversation history — so you can clone them instantly.
+
+**Fleet → Save Soul** — click on any configured instance to save its soul to the archive.
+
+![Save Soul](docs/images/soul-save-dialog.png)
+
+**Fleet → Soul Archive** — browse all saved souls, ready to be loaded into new hires.
+
+![Soul Archive](docs/images/soul-archive.png)
+
+**Fleet → Create → Load Soul** — when creating new instances, pick a soul from the archive. The new employee starts with all the knowledge and personality of the original — no retraining needed.
+
+![Load Soul](docs/images/soul-create.png)
+
 #### Monitor your workforce
 
 Click **"Desktop"** on any running instance to open its detail page — embedded noVNC desktop, live logs, and real-time resource charts.
@@ -123,6 +141,10 @@ clawsandbox restart <name|all>          # Restart an instance (stop + start)
 clawsandbox logs <name> [-f]            # View instance logs
 clawsandbox destroy <name|all>          # Destroy instance (data kept by default)
 clawsandbox destroy --purge <name|all>  # Destroy instance and delete its data
+clawsandbox snapshot save <name>        # Save an instance's soul to the archive
+clawsandbox snapshot list               # List all saved souls
+clawsandbox snapshot delete <name>      # Delete a saved soul
+clawsandbox create 1 --from-snapshot <soul>  # Create instance from a saved soul
 clawsandbox dashboard serve              # Start the Web Dashboard
 clawsandbox dashboard stop               # Stop the Web Dashboard
 clawsandbox dashboard restart            # Restart the Web Dashboard

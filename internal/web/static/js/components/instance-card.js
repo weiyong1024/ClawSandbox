@@ -2,7 +2,7 @@ import { html } from '../lib.js';
 import { useLang } from '../i18n.js';
 import { formatBytes } from '../utils.js';
 
-export function InstanceCard({ instance, stats, pending, onStart, onStop, onDestroy, onDesktop, onConfigure, onReset }) {
+export function InstanceCard({ instance, stats, pending, onStart, onStop, onDestroy, onDesktop, onConfigure, onSnapshot }) {
   const { t } = useLang();
   const isRunning = instance.status === 'running';
   const cpu = stats?.cpu_percent ?? 0;
@@ -11,13 +11,17 @@ export function InstanceCard({ instance, stats, pending, onStart, onStop, onDest
   const memPct = memLimit > 0 ? (memUsed / memLimit) * 100 : 0;
   const busy = !!pending;
 
+  const statusLabel = pending
+    ? t(`action.${pending}`)
+    : isRunning ? instance.status : t('status.suspended');
+
   return html`
     <div class="card ${isRunning ? 'card-running' : 'card-stopped'} ${busy ? 'card-busy' : ''}">
       <div class="card-header">
         <div class="card-name">${instance.name}</div>
         <span class="status-badge ${isRunning ? 'status-running' : 'status-stopped'}">
           <span class="status-dot"></span>
-          ${pending ? t(`action.${pending}`) : instance.status}
+          ${statusLabel}
         </span>
       </div>
 
@@ -77,15 +81,17 @@ export function InstanceCard({ instance, stats, pending, onStart, onStop, onDest
           <button class="btn btn-sm btn-configure" onClick=${onConfigure} disabled=${busy}>
             ${pending === 'configuring' ? t('action.configuring') : t('card.configure')}
           </button>
-          <button class="btn btn-sm btn-ghost" onClick=${onReset} disabled=${busy}>
-            ${pending === 'resetting' ? t('action.resetting') : t('card.reset')}
-          </button>
+          ${instance.model_name && html`
+            <button class="btn btn-sm btn-snapshot" onClick=${onSnapshot} disabled=${busy}>
+              ${t('card.snapshot')}
+            </button>
+          `}
           <button class="btn btn-sm btn-warning" onClick=${onStop} disabled=${busy}>
-            ${pending === 'stopping' ? t('action.stopping') : t('card.stop')}
+            ${pending === 'stopping' ? t('action.stopping') : t('card.suspend')}
           </button>
         ` : html`
           <button class="btn btn-sm btn-success" onClick=${onStart} disabled=${busy}>
-            ${pending === 'starting' ? t('action.starting') : t('card.start')}
+            ${pending === 'starting' ? t('action.starting') : t('card.resume')}
           </button>
         `}
         <button class="btn btn-sm btn-danger" onClick=${onDestroy} disabled=${busy}>
