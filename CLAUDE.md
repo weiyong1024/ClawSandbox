@@ -6,6 +6,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ClawSandbox — a minimal, easy-to-use virtualized sandbox tool for OpenClaw. Solves the problem of rapidly deploying multiple isolated OpenClaw instances on a single machine, enabling users to run an entire OpenClaw fleet. Open-sourced on GitHub.
 
+## Workflow
+
+Before starting any work, always pull the latest remote main branch:
+
+```bash
+git fetch origin
+git checkout main
+git pull origin main
+```
+
+Then create a feature branch from the up-to-date main. Never work directly on a stale branch.
+
 ## Build/Test/Lint Commands
 
 ```bash

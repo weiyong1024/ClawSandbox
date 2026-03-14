@@ -211,11 +211,17 @@ body {
 /* ── Dashboard ── */
 .dashboard-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 16px;
   padding: 24px;
   max-width: 1400px;
   margin: 0 auto;
+}
+
+@media (max-width: 1100px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 .dashboard-loading,
@@ -891,9 +897,15 @@ body {
 
 /* ── Asset Cards ── */
 .assets-list {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 12px;
+}
+
+@media (max-width: 900px) {
+  .assets-list {
+    grid-template-columns: 1fr;
+  }
 }
 
 .asset-card {
