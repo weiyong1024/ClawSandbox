@@ -110,6 +110,12 @@ Click **"Desktop"** on any running instance to open its detail page — embedded
 
 ![Instance Desktop](docs/images/instance-desktop.jpeg)
 
+#### Watch your team collaborate
+
+Connect your fleet to messaging platforms and watch your AI employees work together. Here, an engineer, product manager, and marketer welcome a new teammate — all running autonomously in a Discord group chat.
+
+![Bot Collaboration](docs/images/welcome-on-board-for-bot.jpeg)
+
 ## Documentation
 
 See the **[Wiki](https://github.com/weiyong1024/ClawSandbox/wiki)** for full documentation, including:

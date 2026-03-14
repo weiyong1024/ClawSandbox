@@ -110,6 +110,12 @@ clawsandbox dashboard serve
 
 ![实例桌面](docs/images/instance-desktop.jpeg)
 
+#### 观摩团队协作
+
+将你的 AI 军团接入消息平台，观摩员工们自主协作。下图中，工程师、产品经理和市场专员在 Discord 群聊中欢迎新同事入职——全程自动运行。
+
+![Bot 协作](docs/images/welcome-on-board-for-bot.jpeg)
+
 ## 文档
 
 完整文档请参阅 **[Wiki](https://github.com/weiyong1024/ClawSandbox/wiki)**，包括：
