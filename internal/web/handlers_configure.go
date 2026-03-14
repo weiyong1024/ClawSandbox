@@ -21,6 +21,8 @@ type configureRequest struct {
 	Model        string `json:"model"`
 	Channel      string `json:"channel"`
 	ChannelToken string `json:"channel_token"`
+	AppID        string `json:"app_id"`
+	AppSecret    string `json:"app_secret"`
 }
 
 // handleConfigureInstance configures an OpenClaw instance via docker exec.
@@ -68,6 +70,8 @@ func (s *Server) handleConfigureInstance(w http.ResponseWriter, r *http.Request)
 			}
 			req.Channel = channel.Channel
 			req.ChannelToken = channel.Token
+			req.AppID = channel.AppID
+			req.AppSecret = channel.AppSecret
 		}
 
 		// Channel is exclusive — release previous and assign new
@@ -110,8 +114,11 @@ func (s *Server) handleConfigureInstance(w http.ResponseWriter, r *http.Request)
 	}
 
 	// Resolve bot display name from the channel platform for text @mention detection.
+	// Lark/Feishu doesn't support programmatic bot name resolution via API,
+	// so we skip it — text @mention detection is not needed for Feishu
+	// (it uses native platform mentions).
 	var botName string
-	if req.Channel != "" && req.ChannelToken != "" {
+	if req.Channel != "" && req.Channel != "lark" && req.ChannelToken != "" {
 		botName = resolveBotName(req.Channel, req.ChannelToken)
 	}
 
@@ -122,6 +129,8 @@ func (s *Server) handleConfigureInstance(w http.ResponseWriter, r *http.Request)
 		Model:        req.Model,
 		Channel:      req.Channel,
 		ChannelToken: req.ChannelToken,
+		AppID:        req.AppID,
+		AppSecret:    req.AppSecret,
 		BotName:      botName,
 	}); err != nil {
 		writeError(w, http.StatusInternalServerError, fmt.Sprintf("configure failed: %v", err))

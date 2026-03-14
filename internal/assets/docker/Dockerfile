@@ -35,7 +35,9 @@ RUN mv /usr/bin/chromium /usr/bin/chromium-real \
     && update-alternatives --set x-www-browser /usr/bin/chromium
 
 # ── Layer 2: OpenClaw ─────────────────────────────────────────────────────────
-RUN npm install -g openclaw@latest
+RUN npm install -g openclaw@latest \
+    && cd /usr/local/lib/node_modules/openclaw/extensions/feishu \
+    && npm install --omit=dev
 
 # ── Layer 3: Playwright Chromium (build-time, shared path) ───────────────────
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright

@@ -16,9 +16,21 @@ type ConfigureParams struct {
 	Provider     string // e.g. "anthropic", "openai"
 	APIKey       string
 	Model        string // e.g. "claude-sonnet-4-6"
-	Channel      string // e.g. "telegram"
-	ChannelToken string // bot token
+	Channel      string // e.g. "telegram", "lark"
+	ChannelToken string // bot token (Telegram, Discord, Slack)
+	AppID        string // Lark/Feishu App ID
+	AppSecret    string // Lark/Feishu App Secret
 	BotName      string // bot display name for text @mention detection
+}
+
+// openclawChannelName maps ClawSandbox channel names to OpenClaw plugin IDs.
+// OpenClaw uses "feishu" as the plugin/channel name, but ClawSandbox presents
+// it as "lark" in the UI for international users.
+func openclawChannelName(channel string) string {
+	if channel == "lark" {
+		return "feishu"
+	}
+	return channel
 }
 
 // Configure runs openclaw CLI commands inside the container to set up the instance.
@@ -59,40 +71,94 @@ func Configure(cli *docker.Client, p ConfigureParams) error {
 	}
 
 	// Step 3: enable channel plugin if specified (must happen before gateway
-	// starts so the plugin is loaded on boot)
+	// starts so the plugin is loaded on boot).
+	// Map ClawSandbox channel names to OpenClaw plugin IDs (e.g. "lark" → "feishu").
+	pluginName := openclawChannelName(p.Channel)
 	if p.Channel != "" {
+		// Feishu plugin requires npm dependencies that may not be installed
+		// in older images. Install them if missing (idempotent, fast if present).
+		if pluginName == "feishu" {
+			_ = dockerExecAs(cli, p.ContainerID, "root", []string{
+				"bash", "-c",
+				"cd /usr/local/lib/node_modules/openclaw/extensions/feishu && npm install --omit=dev",
+			})
+		}
 		if err := dockerExecAs(cli, p.ContainerID, "node", []string{
-			"openclaw", "plugins", "enable", p.Channel,
+			"openclaw", "plugins", "enable", pluginName,
 		}); err != nil {
-			return fmt.Errorf("plugins enable %s: %w", p.Channel, err)
+			return fmt.Errorf("plugins enable %s: %w", pluginName, err)
 		}
 	}
 
-	// Step 4: start openclaw gateway via supervisord (runs as "root" — supervisord
-	// socket is owned by root; the gateway process itself runs as "node" per
-	// the [program:openclaw] user=node directive)
-	if err := dockerExecAs(cli, p.ContainerID, "root", []string{
-		"supervisorctl", "start", "openclaw",
-	}); err != nil {
-		return fmt.Errorf("supervisorctl start: %w", err)
-	}
+	// Step 4: set up channel credentials and policies.
+	//
+	// Feishu/Lark uses config set (appId + appSecret) instead of channels add.
+	// Its credentials and policies are written BEFORE the gateway starts to
+	// avoid hot-reload race conditions.
+	//
+	// Other channels (Telegram, Discord, Slack) require a running gateway for
+	// "channels add --token", so they follow the start→add→stop→policies→restart
+	// pattern.
+	hasChannelCreds := (p.Channel != "" && p.ChannelToken != "") ||
+		(p.Channel == "lark" && p.AppID != "" && p.AppSecret != "")
 
-	// Step 5: wait for gateway to be ready
-	if err := waitForGateway(cli, p.ContainerID, 30*time.Second); err != nil {
-		return fmt.Errorf("waiting for gateway: %w", err)
-	}
+	if p.Channel == "lark" && p.AppID != "" && p.AppSecret != "" {
+		// Feishu: write all config offline (no running gateway needed).
+		if err := dockerExecAs(cli, p.ContainerID, "node", []string{
+			"openclaw", "config", "set", "channels.feishu.appId", p.AppID,
+		}); err != nil {
+			return fmt.Errorf("config set channels.feishu.appId: %w", err)
+		}
+		if err := dockerExecAs(cli, p.ContainerID, "node", []string{
+			"openclaw", "config", "set", "channels.feishu.appSecret", p.AppSecret,
+		}); err != nil {
+			return fmt.Errorf("config set channels.feishu.appSecret: %w", err)
+		}
+		// Set policies offline too.
+		channelCfg := "channels.feishu"
+		for _, s := range []struct{ path, value string }{
+			{channelCfg + ".allowFrom", `["*"]`},
+			{channelCfg + ".dmPolicy", "open"},
+			{channelCfg + ".groupPolicy", "open"},
+			{channelCfg + ".allowBots", "mentions"},
+		} {
+			args := []string{"openclaw", "config", "set", s.path, s.value}
+			if strings.HasPrefix(s.value, "[") {
+				args = append(args, "--strict-json")
+			}
+			if err := dockerExecAs(cli, p.ContainerID, "node", args); err != nil {
+				return fmt.Errorf("config set %s: %w", s.path, err)
+			}
+		}
+		// Start gateway with the complete config.
+		if err := dockerExecAs(cli, p.ContainerID, "root", []string{
+			"supervisorctl", "start", "openclaw",
+		}); err != nil {
+			return fmt.Errorf("supervisorctl start: %w", err)
+		}
+		if err := waitForGateway(cli, p.ContainerID, 30*time.Second); err != nil {
+			return fmt.Errorf("waiting for gateway: %w", err)
+		}
+	} else if p.Channel != "" && p.ChannelToken != "" {
+		// Other channels: start gateway → channels add → stop → policies → restart.
+		if err := dockerExecAs(cli, p.ContainerID, "root", []string{
+			"supervisorctl", "start", "openclaw",
+		}); err != nil {
+			return fmt.Errorf("supervisorctl start: %w", err)
+		}
+		if err := waitForGateway(cli, p.ContainerID, 30*time.Second); err != nil {
+			return fmt.Errorf("waiting for gateway: %w", err)
+		}
 
-	// Step 6: add channel account (requires running gateway with plugin loaded)
-	if p.Channel != "" && p.ChannelToken != "" {
 		if err := dockerExecAs(cli, p.ContainerID, "node", []string{
 			"openclaw", "channels", "add",
-			"--channel", p.Channel,
+			"--channel", pluginName,
 			"--token", p.ChannelToken,
 		}); err != nil {
 			return fmt.Errorf("channels add: %w", err)
 		}
 
-		// Step 7: stop gateway before writing policy changes so they are
+		// Stop gateway before writing policy changes so they are
 		// applied offline — no hot-reload with incomplete intermediate config.
 		if err := dockerExecAs(cli, p.ContainerID, "root", []string{
 			"supervisorctl", "stop", "openclaw",
@@ -100,11 +166,7 @@ func Configure(cli *docker.Client, p ConfigureParams) error {
 			return fmt.Errorf("supervisorctl stop before policies: %w", err)
 		}
 
-		// Set policies to "open" so the bot responds without pairing.
-		// allowFrom must include "*" when policy is "open".
-		// Note: groupAllowFrom is only supported by some channels (e.g. Telegram)
-		// but not others (e.g. Discord), so we set it only when applicable.
-		channelCfg := fmt.Sprintf("channels.%s", p.Channel)
+		channelCfg := fmt.Sprintf("channels.%s", pluginName)
 		policySteps := []struct{ path, value string }{
 			{channelCfg + ".allowFrom", `["*"]`},
 			{channelCfg + ".dmPolicy", "open"},
@@ -115,10 +177,6 @@ func Configure(cli *docker.Client, p ConfigureParams) error {
 				channelCfg + ".groupAllowFrom", `["*"]`,
 			})
 		}
-		// Step 7b: enable bot-to-bot communication for channels that support it.
-		// "mentions" mode: only process bot messages that @mention this bot,
-		// which enables directed bot-to-bot conversation while preventing
-		// infinite reply loops from unmentioned bot chatter.
 		if p.Channel == "discord" || p.Channel == "slack" {
 			policySteps = append(policySteps, struct{ path, value string }{
 				channelCfg + ".allowBots", "mentions",
@@ -126,7 +184,6 @@ func Configure(cli *docker.Client, p ConfigureParams) error {
 		}
 		for _, s := range policySteps {
 			args := []string{"openclaw", "config", "set", s.path, s.value}
-			// Arrays need --strict-json to be parsed correctly.
 			if strings.HasPrefix(s.value, "[") {
 				args = append(args, "--strict-json")
 			}
@@ -135,11 +192,7 @@ func Configure(cli *docker.Client, p ConfigureParams) error {
 			}
 		}
 
-		// Step 8: set agent identity name for text @mention detection.
-		// This enables bot-to-bot communication: when Bot-A sends "@Bot-B",
-		// OpenClaw on Bot-B matches it via mentionPatterns regex derived
-		// from the identity name, even though it's not a native platform mention.
-		// Identity lives under agents.list[].identity, not agents.defaults.
+		// Set agent identity name for text @mention detection.
 		if p.BotName != "" {
 			agentsList := fmt.Sprintf(`[{"id":"main","identity":{"name":"%s"}}]`, p.BotName)
 			if err := dockerExecAs(cli, p.ContainerID, "node", []string{
@@ -149,7 +202,7 @@ func Configure(cli *docker.Client, p ConfigureParams) error {
 			}
 		}
 
-		// Step 9: start gateway with the complete, final config.
+		// Start gateway with the complete, final config.
 		if err := dockerExecAs(cli, p.ContainerID, "root", []string{
 			"supervisorctl", "start", "openclaw",
 		}); err != nil {
@@ -158,7 +211,18 @@ func Configure(cli *docker.Client, p ConfigureParams) error {
 		if err := waitForGateway(cli, p.ContainerID, 30*time.Second); err != nil {
 			return fmt.Errorf("waiting for gateway restart: %w", err)
 		}
+	} else if p.Channel == "" {
+		// No channel — just start the gateway with model-only config.
+		if err := dockerExecAs(cli, p.ContainerID, "root", []string{
+			"supervisorctl", "start", "openclaw",
+		}); err != nil {
+			return fmt.Errorf("supervisorctl start: %w", err)
+		}
+		if err := waitForGateway(cli, p.ContainerID, 30*time.Second); err != nil {
+			return fmt.Errorf("waiting for gateway: %w", err)
+		}
 	}
+	_ = hasChannelCreds // used in condition above
 
 	return nil
 }
@@ -202,6 +266,7 @@ func ConfigStatus(cli *docker.Client, containerID string) (*ConfigInfo, error) {
 		Channels map[string]struct {
 			BotToken string `json:"botToken"`
 			Token    string `json:"token"`
+			AppID    string `json:"appId"`
 		} `json:"channels"`
 	}
 	if err := json.Unmarshal([]byte(out), &cfg); err != nil {
@@ -238,12 +303,15 @@ func ConfigStatus(cli *docker.Client, containerID string) (*ConfigInfo, error) {
 		}
 	}
 
-	// Find the first channel and its token hint.
+	// Find the first channel and its token/credential hint.
 	for name, ch := range cfg.Channels {
 		info.Channel = name
 		token := ch.BotToken
 		if token == "" {
 			token = ch.Token
+		}
+		if token == "" {
+			token = ch.AppID // Feishu uses appId instead of token
 		}
 		if token != "" {
 			info.ChannelTokenHint = maskLast4(token)
