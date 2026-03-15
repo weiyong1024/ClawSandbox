@@ -13,6 +13,7 @@ func (s *Server) registerRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/v1/instances/{name}/start", s.handleStartInstance)
 	mux.HandleFunc("POST /api/v1/instances/{name}/stop", s.handleStopInstance)
 	mux.HandleFunc("DELETE /api/v1/instances/{name}", s.handleDestroyInstance)
+	mux.HandleFunc("POST /api/v1/instances/batch-destroy", s.handleBatchDestroyInstances)
 	mux.HandleFunc("POST /api/v1/instances/{name}/reset", s.handleResetInstance)
 	mux.HandleFunc("GET /api/v1/instances/{name}/logs", s.handleInstanceLogs)
 	mux.HandleFunc("POST /api/v1/instances/{name}/configure", s.handleConfigureInstance)

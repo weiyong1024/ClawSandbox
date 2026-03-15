@@ -256,11 +256,30 @@ body {
 .card-running { border-left: 3px solid var(--success); }
 .card-stopped { border-left: 3px solid var(--text-dim); }
 
+.card-selected {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 1px rgba(248, 113, 113, 0.3);
+}
+
 .card-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 14px;
+}
+
+.card-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.card-checkbox {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--primary);
+  cursor: pointer;
+  flex-shrink: 0;
 }
 
 .card-name {
@@ -447,9 +466,20 @@ body {
   border-radius: var(--radius);
   width: 100%;
   max-width: 420px;
+  max-height: 70vh;
   margin: 24px;
+  display: flex;
+  flex-direction: column;
   animation: slideUp 0.2s ease;
 }
+
+.dialog > form {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.dialog-body { padding: 20px; overflow-y: auto; min-height: 0; }
 
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
@@ -478,8 +508,6 @@ body {
   transition: all var(--transition);
 }
 .dialog-close:hover { color: var(--text); background: var(--surface-alt); }
-
-.dialog-body { padding: 20px; }
 
 .form-label {
   display: block;
@@ -878,6 +906,38 @@ body {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 24px;
+}
+
+.page-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── Batch Selection Bar ── */
+.batch-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 24px;
+  margin-bottom: 8px;
+}
+
+.batch-select-all {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  cursor: pointer;
+  user-select: none;
+}
+
+.batch-select-all input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--primary);
+  cursor: pointer;
 }
 
 .page-title {

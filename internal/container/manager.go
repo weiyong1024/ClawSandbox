@@ -33,6 +33,8 @@ func Create(cli *docker.Client, p CreateParams) (string, error) {
 		"18789/tcp": {},
 	}
 
+	binds := []string{fmt.Sprintf("%s:/home/node/.openclaw", p.DataDir)}
+
 	container, err := cli.CreateContainer(docker.CreateContainerOptions{
 		Name: p.Name,
 		Config: &docker.Config{
@@ -44,7 +46,7 @@ func Create(cli *docker.Client, p CreateParams) (string, error) {
 			},
 		},
 		HostConfig: &docker.HostConfig{
-			Binds:        []string{fmt.Sprintf("%s:/home/node/.openclaw", p.DataDir)},
+			Binds:        binds,
 			PortBindings: portBindings,
 			NetworkMode:  cfg.NetworkName,
 			Memory:       p.MemoryBytes,
@@ -70,6 +72,12 @@ func Remove(cli *docker.Client, containerID string) error {
 		ID:    containerID,
 		Force: true,
 	})
+}
+
+// IsNotFound returns true if the error indicates the container does not exist.
+func IsNotFound(err error) bool {
+	_, ok := err.(*docker.NoSuchContainer)
+	return ok
 }
 
 // Status returns the container's status string and its StartedAt time (zero if not running).

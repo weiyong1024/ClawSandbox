@@ -13,7 +13,7 @@ function SkeletonCard() {
   `;
 }
 
-export function Dashboard({ instances, stats, loading, pending, onStart, onStop, onDestroy, onDesktop, onConfigure, onSnapshot, onCreateClick }) {
+export function Dashboard({ instances, stats, loading, pending, selected, onToggleSelect, onSelectAll, onBatchDestroy, onStart, onStop, onDestroy, onDesktop, onConfigure, onSnapshot, onCreateClick }) {
   const { t } = useLang();
 
   if (loading) {
@@ -26,13 +26,23 @@ export function Dashboard({ instances, stats, loading, pending, onStart, onStop,
     `;
   }
 
+  const selectedCount = selected.size;
+  const allSelected = instances.length > 0 && selectedCount === instances.length;
+
   return html`
     <div class="page-content">
       <div class="page-header">
         <h2 class="page-title">${t('sidebar.instances')} <span class="toolbar-count">${t('toolbar.instances', instances.length)}</span></h2>
-        <button class="btn btn-primary" onClick=${onCreateClick}>
-          ${t('toolbar.create')}
-        </button>
+        <div class="page-header-actions">
+          ${selectedCount > 0 && html`
+            <button class="btn btn-danger" onClick=${onBatchDestroy}>
+              ${t('batch.destroy', selectedCount)}
+            </button>
+          `}
+          <button class="btn btn-primary" onClick=${onCreateClick}>
+            ${t('toolbar.create')}
+          </button>
+        </div>
       </div>
 
       ${instances.length === 0 ? html`
@@ -42,6 +52,17 @@ export function Dashboard({ instances, stats, loading, pending, onStart, onStop,
           <p>${t('dashboard.empty.desc')}</p>
         </div>
       ` : html`
+        ${instances.length > 1 && html`
+          <div class="batch-bar">
+            <label class="batch-select-all">
+              <input type="checkbox"
+                checked=${allSelected}
+                ref=${(el) => { if (el) el.indeterminate = selectedCount > 0 && !allSelected; }}
+                onChange=${onSelectAll} />
+              <span>${allSelected ? t('batch.deselectAll') : t('batch.selectAll')}</span>
+            </label>
+          </div>
+        `}
         <div class="dashboard-grid">
           ${instances.map(inst => html`
             <${InstanceCard}
@@ -49,6 +70,8 @@ export function Dashboard({ instances, stats, loading, pending, onStart, onStop,
               instance=${inst}
               stats=${stats[inst.name]}
               pending=${pending[inst.name]}
+              selected=${selected.has(inst.name)}
+              onToggleSelect=${onToggleSelect}
               onStart=${() => onStart(inst.name)}
               onStop=${() => onStop(inst.name)}
               onDestroy=${() => onDestroy(inst.name)}

@@ -43,6 +43,8 @@ func instanceToResponse(inst state.Instance, assets *state.AssetStore) instanceR
 		if m := assets.GetModel(inst.ModelAssetID); m != nil {
 			resp.ModelName = m.Name
 		}
+	}
+	if assets != nil {
 		if c := assets.GetChannel(inst.ChannelAssetID); c != nil {
 			resp.ChannelName = c.Name
 		}
@@ -281,8 +283,12 @@ func (s *Server) handleDestroyInstance(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := container.Remove(s.docker, inst.ContainerID); err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
-		return
+		// Container may already be gone (e.g. manually removed or prior race).
+		// Continue to clean up state regardless.
+		if !container.IsNotFound(err) {
+			writeError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
 	}
 
 	store.Remove(name)
@@ -301,6 +307,67 @@ func (s *Server) handleDestroyInstance(w http.ResponseWriter, r *http.Request) {
 
 	s.events.Publish(Event{Type: EventDestroyed, Name: name})
 	writeJSON(w, http.StatusOK, map[string]any{"data": map[string]string{"name": name, "status": "destroyed"}})
+}
+
+// handleBatchDestroyInstances destroys multiple instances in a single request,
+// using a single state load/save cycle to avoid write races.
+func (s *Server) handleBatchDestroyInstances(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Names []string `json:"names"`
+	}
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid JSON body")
+		return
+	}
+	if len(req.Names) == 0 {
+		writeError(w, http.StatusBadRequest, "names is required")
+		return
+	}
+
+	store, err := s.loadStore()
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	purge := r.URL.Query().Get("purge") != "false"
+	destroyed := 0
+
+	for _, name := range req.Names {
+		inst := store.Get(name)
+		if inst == nil {
+			continue
+		}
+
+		if err := container.Remove(s.docker, inst.ContainerID); err != nil && !container.IsNotFound(err) {
+			continue
+		}
+
+		store.Remove(name)
+
+		if assets, err := s.loadAssets(); err == nil {
+			assets.ReleaseChannelByInstance(name)
+			_ = assets.SaveAssets()
+		}
+
+		if purge {
+			dataDir, _ := config.DataDir()
+			_ = os.RemoveAll(filepath.Join(dataDir, "data", name))
+		}
+
+		destroyed++
+	}
+
+	_ = store.Save()
+
+	// Publish a single event to trigger UI refresh.
+	if destroyed > 0 {
+		s.events.Publish(Event{Type: EventDestroyed, Name: req.Names[0]})
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"data": map[string]any{"destroyed": destroyed},
+	})
 }
 
 // handleResetInstance purges the persisted OpenClaw config so the instance
@@ -344,6 +411,10 @@ func (s *Server) handleResetInstance(w http.ResponseWriter, r *http.Request) {
 	} {
 		_ = os.RemoveAll(filepath.Join(instanceDataDir, sub))
 	}
+
+	// Clear config references (model asset, channel asset, mode) so the
+	// instance shows as unconfigured.
+	store.SetConfig(name, "", "")
 
 	// Release any channel assets assigned to this instance.
 	assets, err := s.loadAssets()

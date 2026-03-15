@@ -47,6 +47,7 @@ function App() {
   const [connected, setConnected] = useState(true);
   const [configureName, setConfigureName] = useState(null);
   const [snapshotName, setSnapshotName] = useState(null);
+  const [selected, setSelected] = useState(new Set());
   const { toasts, addToast, removeToast } = useToast();
 
   useEffect(() => {
@@ -155,6 +156,38 @@ function App() {
     }
   };
 
+  const onToggleSelect = useCallback((name) => {
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (next.has(name)) next.delete(name); else next.add(name);
+      return next;
+    });
+  }, []);
+
+  const onSelectAll = useCallback(() => {
+    setSelected(prev => {
+      if (prev.size === instances.length) return new Set();
+      return new Set(instances.map(i => i.name));
+    });
+  }, [instances]);
+
+  const onBatchDestroy = async () => {
+    const names = [...selected];
+    if (names.length === 0) return;
+    if (!confirm(t('confirm.batchDestroy', names.length))) return;
+    for (const name of names) {
+      setPending(p => ({ ...p, [name]: 'destroying' }));
+    }
+    try {
+      const result = await api.batchDestroyInstances(names);
+      addToast(t('toast.batchDestroyed', result.destroyed), 'success');
+    } catch (err) {
+      addToast(err.message, 'error');
+    }
+    setPending({});
+    setSelected(new Set());
+  };
+
   useEffect(() => {
     const onKey = (e) => {
       if (e.key === 'Escape' && showCreate) setShowCreate(false);
@@ -209,6 +242,10 @@ function App() {
           stats=${stats}
           loading=${loading}
           pending=${pending}
+          selected=${selected}
+          onToggleSelect=${onToggleSelect}
+          onSelectAll=${onSelectAll}
+          onBatchDestroy=${onBatchDestroy}
           onStart=${onStart}
           onStop=${onStop}
           onDestroy=${onDestroy}

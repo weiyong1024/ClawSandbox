@@ -49,6 +49,13 @@ const messages = {
     'toast.stopped':         (name) => `Suspended ${name}`,
     'toast.destroyed':       (name) => `Destroyed ${name}`,
     'confirm.destroy':       (name) => `Destroy ${name}? This removes the container.`,
+    'confirm.batchDestroy':  (n) => `Destroy ${n} selected instance${n > 1 ? 's' : ''}? This cannot be undone.`,
+
+    'batch.selectAll':       'Select All',
+    'batch.deselectAll':     'Deselect All',
+    'batch.destroy':         (n) => `Destroy ${n} Selected`,
+    'toast.batchDestroyed':  (n) => `Destroyed ${n} instance(s)`,
+    'toast.batchDestroyFailed': (n) => `Failed to destroy ${n} instance(s)`,
 
     'action.starting':       'Resuming...',
     'action.stopping':       'Suspending...',
@@ -194,6 +201,13 @@ const messages = {
     'toast.stopped':         (name) => `已挂起 ${name}`,
     'toast.destroyed':       (name) => `已销毁 ${name}`,
     'confirm.destroy':       (name) => `确定销毁 ${name}？这将移除容器。`,
+    'confirm.batchDestroy':  (n) => `确定销毁 ${n} 个选中的实例？此操作不可撤销。`,
+
+    'batch.selectAll':       '全选',
+    'batch.deselectAll':     '取消全选',
+    'batch.destroy':         (n) => `销毁 ${n} 个选中`,
+    'toast.batchDestroyed':  (n) => `已销毁 ${n} 个实例`,
+    'toast.batchDestroyFailed': (n) => `${n} 个实例销毁失败`,
 
     'action.starting':       '复位中...',
     'action.stopping':       '挂起中...',

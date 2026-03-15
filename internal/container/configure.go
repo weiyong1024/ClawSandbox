@@ -43,7 +43,7 @@ func Configure(cli *docker.Client, p ConfigureParams) error {
 		"supervisorctl", "stop", "openclaw",
 	})
 
-	// Step 1: onboard with API key (runs as "node" — writes to ~node/.openclaw/)
+	// Onboard with API key (runs as "node" — writes to ~node/.openclaw/)
 	apiKeyFlag := fmt.Sprintf("--%s-api-key", p.Provider)
 	if err := dockerExecAs(cli, p.ContainerID, "node", []string{
 		"openclaw", "onboard",
@@ -55,7 +55,7 @@ func Configure(cli *docker.Client, p ConfigureParams) error {
 		return fmt.Errorf("onboard: %w", err)
 	}
 
-	// Step 2: set default model (runs as "node")
+	// Set default model (runs as "node").
 	// OpenClaw expects fully qualified model IDs like "openai/gpt-4o".
 	// If the user passes a bare model name, prefix it with the provider.
 	if p.Model != "" {

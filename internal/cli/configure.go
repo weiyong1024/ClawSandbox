@@ -26,6 +26,7 @@ func init() {
 	f.String("model", "", "Model ID (e.g. claude-sonnet-4-6)")
 	f.String("channel", "", "Chat channel (telegram, discord, slack, etc.)")
 	f.String("channel-token", "", "Channel bot token")
+
 	_ = configureCmd.MarkFlagRequired("api-key")
 }
 

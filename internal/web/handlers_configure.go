@@ -35,8 +35,8 @@ func (s *Server) handleConfigureInstance(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// If asset IDs are provided, resolve them to actual config values
 	if req.ModelAssetID != "" {
+		// Standard mode with asset IDs: resolve them to actual config values.
 		assets, err := s.loadAssets()
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, err.Error())

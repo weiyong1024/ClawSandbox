@@ -2,7 +2,7 @@ import { html } from '../lib.js';
 import { useLang } from '../i18n.js';
 import { formatBytes } from '../utils.js';
 
-export function InstanceCard({ instance, stats, pending, onStart, onStop, onDestroy, onDesktop, onConfigure, onSnapshot }) {
+export function InstanceCard({ instance, stats, pending, selected, onToggleSelect, onStart, onStop, onDestroy, onDesktop, onConfigure, onSnapshot }) {
   const { t } = useLang();
   const isRunning = instance.status === 'running';
   const cpu = stats?.cpu_percent ?? 0;
@@ -16,9 +16,14 @@ export function InstanceCard({ instance, stats, pending, onStart, onStop, onDest
     : isRunning ? instance.status : t('status.suspended');
 
   return html`
-    <div class="card ${isRunning ? 'card-running' : 'card-stopped'} ${busy ? 'card-busy' : ''}">
+    <div class="card ${isRunning ? 'card-running' : 'card-stopped'} ${busy ? 'card-busy' : ''} ${selected ? 'card-selected' : ''}">
       <div class="card-header">
-        <div class="card-name">${instance.name}</div>
+        <div class="card-header-left">
+          <input type="checkbox" class="card-checkbox"
+            checked=${selected}
+            onClick=${(e) => { e.stopPropagation(); onToggleSelect(instance.name); }} />
+          <div class="card-name">${instance.name}</div>
+        </div>
         <span class="status-badge ${isRunning ? 'status-running' : 'status-stopped'}">
           <span class="status-dot"></span>
           ${statusLabel}
