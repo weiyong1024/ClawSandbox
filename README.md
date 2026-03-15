@@ -1,6 +1,13 @@
 # ClawSandbox
 
-> Deploy and manage a fleet of isolated [OpenClaw](https://github.com/openclaw/openclaw) instances on a single machine.
+[![GitHub release](https://img.shields.io/github/v/release/weiyong1024/ClawSandbox)](https://github.com/weiyong1024/ClawSandbox/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/weiyong1024/ClawSandbox/blob/main/LICENSE)
+[![Go](https://img.shields.io/badge/Go-1.25+-00ADD8?logo=go&logoColor=white)](https://go.dev/)
+[![Docker](https://img.shields.io/badge/Docker-required-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
+[![Platform](https://img.shields.io/badge/Platform-macOS%20%7C%20Linux-lightgrey)](https://github.com/weiyong1024/ClawSandbox)
+[![Wiki](https://img.shields.io/badge/Docs-Wiki-blue)](https://github.com/weiyong1024/ClawSandbox/wiki)
+
+> Deploy and manage a fleet of isolated [OpenClaw](https://github.com/openclaw/openclaw) instances on a single machine — from a browser dashboard, no CLI needed.
 
 [中文文档](./README.zh-CN.md)
 
