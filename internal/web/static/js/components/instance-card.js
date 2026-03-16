@@ -2,7 +2,7 @@ import { html } from '../lib.js';
 import { useLang } from '../i18n.js';
 import { formatBytes } from '../utils.js';
 
-export function InstanceCard({ instance, stats, pending, selected, onToggleSelect, onStart, onStop, onDestroy, onDesktop, onConfigure, onSnapshot }) {
+export function InstanceCard({ instance, stats, pending, selected, onToggleSelect, onStart, onStop, onDestroy, onDesktop, onConfigure, onSnapshot, onSkills }) {
   const { t } = useLang();
   const isRunning = instance.status === 'running';
   const cpu = stats?.cpu_percent ?? 0;
@@ -48,13 +48,19 @@ export function InstanceCard({ instance, stats, pending, selected, onToggleSelec
             <span class="config-value">${instance.model_name}</span>
           </div>
         ` : ''}
+        ${instance.character_name ? html`
+          <div class="config-item">
+            <span class="config-label">Character</span>
+            <span class="config-value">${instance.character_name}</span>
+          </div>
+        ` : ''}
         ${instance.channel_name ? html`
           <div class="config-item">
             <span class="config-label">Channel</span>
             <span class="config-value">${instance.channel_name}</span>
           </div>
         ` : ''}
-        ${!instance.model_name && !instance.channel_name ? html`
+        ${!instance.model_name && !instance.channel_name && !instance.character_name ? html`
           <div class="config-item">
             <span class="config-value config-unconfigured">${t('card.unconfigured')}</span>
           </div>
@@ -85,6 +91,9 @@ export function InstanceCard({ instance, stats, pending, selected, onToggleSelec
           <button class="btn btn-sm btn-desktop" onClick=${onDesktop} disabled=${busy}>${t('card.desktop')}</button>
           <button class="btn btn-sm btn-configure" onClick=${onConfigure} disabled=${busy}>
             ${pending === 'configuring' ? t('action.configuring') : t('card.configure')}
+          </button>
+          <button class="btn btn-sm btn-configure" onClick=${onSkills} disabled=${busy}>
+            ${t('card.skills')}
           </button>
           ${instance.model_name && html`
             <button class="btn btn-sm btn-snapshot" onClick=${onSnapshot} disabled=${busy}>

@@ -2,12 +2,14 @@ import { html, useState, useEffect } from '../lib.js';
 import { useLang } from '../i18n.js';
 import { api } from '../api.js';
 
-export function ConfigureDialog({ instanceName, currentModelAssetId, onClose, onConfigure }) {
+export function ConfigureDialog({ instanceName, currentModelAssetId, currentCharacterAssetId, onClose, onConfigure }) {
   const { t } = useLang();
   const [models, setModels] = useState([]);
   const [channels, setChannels] = useState([]);
+  const [characters, setCharacters] = useState([]);
   const [selectedModel, setSelectedModel] = useState(currentModelAssetId || '');
   const [selectedChannel, setSelectedChannel] = useState('');
+  const [selectedCharacter, setSelectedCharacter] = useState(currentCharacterAssetId || '');
   const [configuring, setConfiguring] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -15,9 +17,11 @@ export function ConfigureDialog({ instanceName, currentModelAssetId, onClose, on
     Promise.all([
       api.listModelAssets(),
       api.listChannelAssets(),
-    ]).then(([modelData, channelData]) => {
+      api.listCharacterAssets(),
+    ]).then(([modelData, channelData, characterData]) => {
       setModels(modelData || []);
       setChannels(channelData || []);
+      setCharacters(characterData || []);
 
       // Pre-select model assigned to this instance
       if (currentModelAssetId) setSelectedModel(currentModelAssetId);
@@ -25,6 +29,9 @@ export function ConfigureDialog({ instanceName, currentModelAssetId, onClose, on
       // Pre-select channel assigned to this instance
       const assignedCh = (channelData || []).find(c => c.used_by === instanceName);
       if (assignedCh) setSelectedChannel(assignedCh.id);
+
+      // Pre-select character assigned to this instance
+      if (currentCharacterAssetId) setSelectedCharacter(currentCharacterAssetId);
     }).catch((err) => { console.error('Failed to load assets:', err); }).finally(() => setLoading(false));
   }, [instanceName]);
 
@@ -36,6 +43,7 @@ export function ConfigureDialog({ instanceName, currentModelAssetId, onClose, on
     await onConfigure(instanceName, {
       model_asset_id: selectedModel,
       channel_asset_id: selectedChannel || undefined,
+      character_asset_id: selectedCharacter || undefined,
     });
     setConfiguring(false);
   };
@@ -80,6 +88,29 @@ export function ConfigureDialog({ instanceName, currentModelAssetId, onClose, on
                   `)}
                 </div>
               `}
+
+              <div class="form-label" style="margin-top:16px">${t('configure.characterConfig')}</div>
+              <div class="config-select-list">
+                <label class="config-select-item ${!selectedCharacter ? 'config-select-active' : ''}">
+                  <input type="radio" name="character" value=""
+                    checked=${!selectedCharacter}
+                    onChange=${() => setSelectedCharacter('')} />
+                  <div class="config-select-info">
+                    <div class="config-select-name">${t('configure.noCharacters')}</div>
+                  </div>
+                </label>
+                ${characters.map(c => html`
+                  <label class="config-select-item ${selectedCharacter === c.id ? 'config-select-active' : ''}" key=${c.id}>
+                    <input type="radio" name="character" value=${c.id}
+                      checked=${selectedCharacter === c.id}
+                      onChange=${() => setSelectedCharacter(c.id)} />
+                    <div class="config-select-info">
+                      <div class="config-select-name">${c.name}</div>
+                      ${c.bio && html`<div class="config-select-meta">${c.bio.length > 60 ? c.bio.slice(0, 60) + '...' : c.bio}</div>`}
+                    </div>
+                  </label>
+                `)}
+              </div>
 
               <div class="form-label" style="margin-top:16px">${t('configure.channelConfig')}</div>
               <div class="config-select-list">

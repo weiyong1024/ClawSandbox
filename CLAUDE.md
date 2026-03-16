@@ -57,6 +57,29 @@ Each claw instance is a Docker container running: XFCE4 desktop + TigerVNC + noV
 
 Container data is persisted at `~/.clawsandbox/data/<name>/openclaw/` → `/home/node/.openclaw` inside the container.
 
+## OpenClaw Integration
+
+ClawSandbox manages OpenClaw instances via `docker exec` CLI commands. Key integration points:
+
+### Character / SOUL.md
+- OpenClaw uses `SOUL.md` (Markdown) at `~/.openclaw/SOUL.md` for character/persona definition
+- Gateway watches this file — hot-reloads on change, no restart needed
+- ClawSandbox renders `CharacterAsset` fields into SOUL.md and writes via `docker exec`
+
+### Skills
+- **Bundled Skills** (52): Ship with OpenClaw, status depends on binary/env requirements
+- **Managed Skills**: Installed via `clawhub` CLI to `~/.openclaw/skills/`
+- `openclaw skills list --json` returns structured skill data
+- `npx clawhub --workdir ~/.openclaw --dir skills install/uninstall <slug>` manages community skills
+- ClawHub has rate limits (~20 requests/minute) — handle errors gracefully
+
+### Useful CLI Commands (run as `node` user inside container)
+- `openclaw skills list --json` — list all skills with status
+- `openclaw plugins list` — list all plugins (41 stock plugins)
+- `openclaw config set <path> <value>` — set any config value
+- `npx clawhub search "<query>"` — search community skills
+- `npx clawhub --workdir /home/node/.openclaw --dir skills install <slug> --no-input` — install skill
+
 ## Engineering Principles
 
 All design decisions, project structure, and code implementation must follow best engineering practices. Specifically:

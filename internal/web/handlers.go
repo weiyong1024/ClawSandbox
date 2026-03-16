@@ -18,35 +18,39 @@ import (
 
 // instanceResponse is the JSON representation of a single instance.
 type instanceResponse struct {
-	Name           string    `json:"name"`
-	Status         string    `json:"status"`
-	NoVNC          int       `json:"novnc_port"`
-	Gateway        int       `json:"gateway_port"`
-	CreatedAt      time.Time `json:"created_at"`
-	ModelAssetID   string    `json:"model_asset_id,omitempty"`
-	ChannelAssetID string    `json:"channel_asset_id,omitempty"`
-	ModelName      string    `json:"model_name,omitempty"`
-	ChannelName    string    `json:"channel_name,omitempty"`
+	Name             string    `json:"name"`
+	Status           string    `json:"status"`
+	NoVNC            int       `json:"novnc_port"`
+	Gateway          int       `json:"gateway_port"`
+	CreatedAt        time.Time `json:"created_at"`
+	ModelAssetID     string    `json:"model_asset_id,omitempty"`
+	ChannelAssetID   string    `json:"channel_asset_id,omitempty"`
+	CharacterAssetID string    `json:"character_asset_id,omitempty"`
+	ModelName        string    `json:"model_name,omitempty"`
+	ChannelName      string    `json:"channel_name,omitempty"`
+	CharacterName    string    `json:"character_name,omitempty"`
 }
 
 func instanceToResponse(inst state.Instance, assets *state.AssetStore) instanceResponse {
 	resp := instanceResponse{
-		Name:           inst.Name,
-		Status:         inst.Status,
-		NoVNC:          inst.Ports.NoVNC,
-		Gateway:        inst.Ports.Gateway,
-		CreatedAt:      inst.CreatedAt,
-		ModelAssetID:   inst.ModelAssetID,
-		ChannelAssetID: inst.ChannelAssetID,
+		Name:             inst.Name,
+		Status:           inst.Status,
+		NoVNC:            inst.Ports.NoVNC,
+		Gateway:          inst.Ports.Gateway,
+		CreatedAt:        inst.CreatedAt,
+		ModelAssetID:     inst.ModelAssetID,
+		ChannelAssetID:   inst.ChannelAssetID,
+		CharacterAssetID: inst.CharacterAssetID,
 	}
 	if assets != nil {
 		if m := assets.GetModel(inst.ModelAssetID); m != nil {
 			resp.ModelName = m.Name
 		}
-	}
-	if assets != nil {
 		if c := assets.GetChannel(inst.ChannelAssetID); c != nil {
 			resp.ChannelName = c.Name
+		}
+		if ch := assets.GetCharacter(inst.CharacterAssetID); ch != nil {
+			resp.CharacterName = ch.Name
 		}
 	}
 	return resp
@@ -198,7 +202,7 @@ func (s *Server) handleCreateInstances(w http.ResponseWriter, r *http.Request) {
 		if req.SnapshotName != "" {
 			if snapStore, loadErr := s.loadSnapshots(); loadErr == nil {
 				if snapMeta := snapStore.GetByName(req.SnapshotName); snapMeta != nil && snapMeta.ModelAssetID != "" {
-					store.SetConfig(name, snapMeta.ModelAssetID, "")
+					store.SetConfig(name, snapMeta.ModelAssetID, "", "")
 					_ = store.Save()
 					inst.ModelAssetID = snapMeta.ModelAssetID
 				}
@@ -414,7 +418,7 @@ func (s *Server) handleResetInstance(w http.ResponseWriter, r *http.Request) {
 
 	// Clear config references (model asset, channel asset, mode) so the
 	// instance shows as unconfigured.
-	store.SetConfig(name, "", "")
+	store.SetConfig(name, "", "", "")
 
 	// Release any channel assets assigned to this instance.
 	assets, err := s.loadAssets()

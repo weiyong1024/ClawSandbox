@@ -28,7 +28,7 @@ var createCmd = &cobra.Command{
 }
 
 func init() {
-	createCmd.Flags().BoolVar(&pullFlag, "pull", false, "Pull image from registry if not found locally")
+	createCmd.Flags().BoolVar(&pullFlag, "pull", false, "Force re-pull image even if found locally")
 	createCmd.Flags().StringVar(&fromSnapshotFlag, "from-snapshot", "", "Create instance from a saved snapshot")
 }
 
@@ -157,7 +157,7 @@ func runCreate(cmd *cobra.Command, args []string) error {
 		if fromSnapshotFlag != "" {
 			if snapStore, err := state.LoadSnapshots(); err == nil {
 				if snapMeta := snapStore.GetByName(fromSnapshotFlag); snapMeta != nil && snapMeta.ModelAssetID != "" {
-					store.SetConfig(name, snapMeta.ModelAssetID, "")
+					store.SetConfig(name, snapMeta.ModelAssetID, "", "")
 					_ = store.Save()
 				}
 			}

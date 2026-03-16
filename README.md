@@ -36,9 +36,11 @@ OpenClaw is a self-hosted personal AI assistant that connects to 20+ messaging p
 
 - **One-command fleet deployment** — give it a number, get that many isolated OpenClaw instances
 - **Web Dashboard** — manage your entire fleet from a browser with real-time stats, one-click actions, and embedded noVNC desktops
+- **Character system** — define reusable personas (bio, backstory, style, traits) and assign them to instances. Each bot gets a persistent soul that survives across channels and sessions
+- **Skill management** — browse 52 built-in skills, search and install from 13,000+ community skills on ClawHub. Different instances can have different skill sets
 - **Full desktop per instance** — each claw runs in its own Docker container with an XFCE desktop, accessible via noVNC
 - **Lifecycle management** — create, start, stop, restart, and destroy instances via CLI or Dashboard
-- **Soul Archive** — save a configured instance's soul (personality, memory, model config) and clone it to new instances instantly
+- **Soul Archive** — save a configured instance's soul and clone it to new instances instantly
 - **Auto-recovery** — configured instances automatically restart their gateway after container restarts
 - **Data persistence** — each instance's data survives container restarts
 - **Resource isolation** — instances are isolated from your host system and from each other
@@ -83,6 +85,10 @@ Think of ClawSandbox as **your AI company**. Assets are the tools and resources 
 
 ![Models](docs/images/assets-models.png)
 
+**Assets → Characters** — define reusable personas. Think of them as "job descriptions" — Tony Stark the CTO, Steve Jobs the CPO, Ray Kroc the CMO. Give each character a bio, backstory, communication style, and personality traits.
+
+![Characters](docs/images/assets-characters.png)
+
 **Assets → Channels** — connect messaging platforms (Telegram, Discord, Slack, etc.). These are the "workstations" where your employees serve customers. Optional; validated before saving.
 
 ![Channels](docs/images/assets-channels.png)
@@ -91,9 +97,15 @@ Think of ClawSandbox as **your AI company**. Assets are the tools and resources 
 
 **Fleet → Create** — spin up OpenClaw instances. Each one is a new employee joining your company.
 
-**Fleet → Configure** — assign a model and channel from your asset pool to each instance. Different employees can use different tools for different jobs.
+**Fleet → Configure** — assign a model, character, and channel to each instance. Give your CTO a Claude brain and a Discord workstation. Give your CMO a GPT brain and a Slack feed. Different employees, different tools, different personalities.
 
 ![Fleet](docs/images/fleet.png)
+
+#### Teach them new skills
+
+**Fleet → Skills** — each instance has access to 52 built-in skills (weather, GitHub, coding, and more). Want more? Search 13,000+ community skills on [ClawHub](https://clawhub.com) and install them with one click. Different employees can learn different skills.
+
+![Skills](docs/images/skills.png)
 
 #### Save & clone your employees' souls
 

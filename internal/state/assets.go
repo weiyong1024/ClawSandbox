@@ -33,12 +33,26 @@ type ChannelAsset struct {
 	UsedBy    string `json:"used_by"`
 }
 
-// AssetStore manages model and channel assets with mutex-protected persistence.
+// CharacterAsset represents a reusable character/persona definition.
+// Characters are shared — multiple instances can use the same character simultaneously.
+// Fields are rendered into a SOUL.md file and injected into the container.
+type CharacterAsset struct {
+	ID         string `json:"id"`
+	Name       string `json:"name"`
+	Bio        string `json:"bio"`
+	Lore       string `json:"lore"`
+	Style      string `json:"style"`
+	Topics     string `json:"topics"`
+	Adjectives string `json:"adjectives"`
+}
+
+// AssetStore manages model, channel, and character assets with mutex-protected persistence.
 type AssetStore struct {
-	mu       sync.Mutex
-	Models   []*ModelAsset   `json:"models"`
-	Channels []*ChannelAsset `json:"channels"`
-	path     string
+	mu         sync.Mutex
+	Models     []*ModelAsset     `json:"models"`
+	Channels   []*ChannelAsset   `json:"channels"`
+	Characters []*CharacterAsset `json:"characters"`
+	path       string
 }
 
 // LoadAssets loads the asset store from disk.
@@ -217,4 +231,63 @@ func (s *AssetStore) ReleaseChannelByInstance(instanceName string) {
 			c.UsedBy = ""
 		}
 	}
+}
+
+// --- Character asset operations (characters are shared — multiple instances can use the same character) ---
+
+// ListCharacters returns a copy of all character assets.
+func (s *AssetStore) ListCharacters() []CharacterAsset {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	out := make([]CharacterAsset, len(s.Characters))
+	for i, c := range s.Characters {
+		out[i] = *c
+	}
+	return out
+}
+
+// GetCharacter returns a character asset by ID, or nil.
+func (s *AssetStore) GetCharacter(id string) *CharacterAsset {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for _, c := range s.Characters {
+		if c.ID == id {
+			cp := *c
+			return &cp
+		}
+	}
+	return nil
+}
+
+// AddCharacter adds a character asset.
+func (s *AssetStore) AddCharacter(c *CharacterAsset) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.Characters = append(s.Characters, c)
+}
+
+// UpdateCharacter replaces a character asset by ID.
+func (s *AssetStore) UpdateCharacter(c *CharacterAsset) bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for i, existing := range s.Characters {
+		if existing.ID == c.ID {
+			s.Characters[i] = c
+			return true
+		}
+	}
+	return false
+}
+
+// RemoveCharacter removes a character asset by ID. Returns false if not found.
+func (s *AssetStore) RemoveCharacter(id string) bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for i, c := range s.Characters {
+		if c.ID == id {
+			s.Characters = append(s.Characters[:i], s.Characters[i+1:]...)
+			return true
+		}
+	}
+	return false
 }

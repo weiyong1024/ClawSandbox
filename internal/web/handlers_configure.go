@@ -12,8 +12,9 @@ import (
 // Supports both asset-based (model_asset_id/channel_asset_id) and direct field configuration.
 type configureRequest struct {
 	// Asset-based configuration
-	ModelAssetID   string `json:"model_asset_id"`
-	ChannelAssetID string `json:"channel_asset_id"`
+	ModelAssetID     string `json:"model_asset_id"`
+	ChannelAssetID   string `json:"channel_asset_id"`
+	CharacterAssetID string `json:"character_asset_id"`
 
 	// Direct configuration (legacy, still supported)
 	Provider     string `json:"provider"`
@@ -122,6 +123,24 @@ func (s *Server) handleConfigureInstance(w http.ResponseWriter, r *http.Request)
 		botName = resolveBotName(req.Channel, req.ChannelToken)
 	}
 
+	// Resolve character asset into SoulParams so it's injected before gateway starts.
+	var soul *container.SoulParams
+	if req.CharacterAssetID != "" {
+		assets, loadErr := s.loadAssets()
+		if loadErr == nil {
+			if ch := assets.GetCharacter(req.CharacterAssetID); ch != nil {
+				soul = &container.SoulParams{
+					Name:       ch.Name,
+					Bio:        ch.Bio,
+					Lore:       ch.Lore,
+					Style:      ch.Style,
+					Topics:     ch.Topics,
+					Adjectives: ch.Adjectives,
+				}
+			}
+		}
+	}
+
 	if err := container.Configure(s.docker, container.ConfigureParams{
 		ContainerID:  inst.ContainerID,
 		Provider:     req.Provider,
@@ -132,13 +151,14 @@ func (s *Server) handleConfigureInstance(w http.ResponseWriter, r *http.Request)
 		AppID:        req.AppID,
 		AppSecret:    req.AppSecret,
 		BotName:      botName,
+		Soul:         soul,
 	}); err != nil {
 		writeError(w, http.StatusInternalServerError, fmt.Sprintf("configure failed: %v", err))
 		return
 	}
 
 	// Persist which asset IDs were used so the card and dialog can show them.
-	store.SetConfig(name, req.ModelAssetID, req.ChannelAssetID)
+	store.SetConfig(name, req.ModelAssetID, req.ChannelAssetID, req.CharacterAssetID)
 	_ = store.Save()
 
 	writeJSON(w, http.StatusOK, map[string]any{

@@ -533,6 +533,25 @@ body {
 }
 
 .form-input:focus { border-color: var(--primary); }
+.form-textarea { resize: vertical; min-height: 60px; }
+
+.skills-list { display: flex; flex-direction: column; gap: 4px; }
+.skill-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.skill-info { flex: 1; min-width: 0; }
+.skill-name { font-size: 0.88rem; font-weight: 500; }
+.skill-meta { font-size: 0.76rem; color: var(--text-dim); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.skill-badge { font-size: 0.72rem; padding: 2px 8px; border-radius: 10px; white-space: nowrap; }
+.skill-badge-ready { background: rgba(34,197,94,.15); color: var(--success); }
+.skill-badge-missing { background: rgba(161,161,170,.15); color: var(--text-dim); }
 
 .form-hint {
   margin-top: 10px;

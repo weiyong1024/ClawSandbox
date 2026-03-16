@@ -32,6 +32,16 @@ func (s *Server) registerRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("PUT /api/v1/assets/channels/{id}", s.handleUpdateChannelAsset)
 	mux.HandleFunc("DELETE /api/v1/assets/channels/{id}", s.handleDeleteChannelAsset)
 	mux.HandleFunc("POST /api/v1/assets/channels/test", s.handleTestChannelAsset)
+	mux.HandleFunc("GET /api/v1/assets/characters", s.handleListCharacterAssets)
+	mux.HandleFunc("POST /api/v1/assets/characters", s.handleCreateCharacterAsset)
+	mux.HandleFunc("PUT /api/v1/assets/characters/{id}", s.handleUpdateCharacterAsset)
+	mux.HandleFunc("DELETE /api/v1/assets/characters/{id}", s.handleDeleteCharacterAsset)
+
+	// Skills (per-instance)
+	mux.HandleFunc("GET /api/v1/instances/{name}/skills", s.handleListInstanceSkills)
+	mux.HandleFunc("POST /api/v1/instances/{name}/skills/install", s.handleInstallSkill)
+	mux.HandleFunc("DELETE /api/v1/instances/{name}/skills/{slug}", s.handleUninstallSkill)
+	mux.HandleFunc("GET /api/v1/skills/search", s.handleSearchClawHub)
 
 	// Snapshots
 	mux.HandleFunc("GET /api/v1/snapshots", s.handleListSnapshots)

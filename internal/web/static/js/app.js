@@ -10,9 +10,11 @@ import { CreateDialog } from './components/create-dialog.js';
 import { ConfigureDialog } from './components/configure-dialog.js';
 import { ModelAssets } from './components/model-assets.js';
 import { ChannelAssets } from './components/channel-assets.js';
+import { CharacterAssets } from './components/character-assets.js';
 import { ImagePage } from './components/image-page.js';
 import { Snapshots } from './components/snapshots.js';
 import { SnapshotDialog } from './components/snapshot-dialog.js';
+import { SkillManagerDialog } from './components/skill-manager-dialog.js';
 import { ToastContainer, useToast } from './components/toast.js';
 import { ConnectionStatus } from './components/connection-status.js';
 
@@ -31,6 +33,7 @@ function parseRoute(hash) {
   if (hash === '#/fleet') return { page: 'fleet', route: '#/fleet' };
   if (hash === '#/assets/models') return { page: 'models', route: '#/assets/models' };
   if (hash === '#/assets/channels') return { page: 'channels', route: '#/assets/channels' };
+  if (hash === '#/assets/characters') return { page: 'characters', route: '#/assets/characters' };
   if (hash === '#/system/image') return { page: 'image', route: '#/system/image' };
 
   return { page: 'fleet', route: '#/fleet' };
@@ -47,6 +50,7 @@ function App() {
   const [connected, setConnected] = useState(true);
   const [configureName, setConfigureName] = useState(null);
   const [snapshotName, setSnapshotName] = useState(null);
+  const [skillsName, setSkillsName] = useState(null);
   const [selected, setSelected] = useState(new Set());
   const { toasts, addToast, removeToast } = useToast();
 
@@ -193,10 +197,11 @@ function App() {
       if (e.key === 'Escape' && showCreate) setShowCreate(false);
       if (e.key === 'Escape' && configureName) setConfigureName(null);
       if (e.key === 'Escape' && snapshotName) setSnapshotName(null);
+      if (e.key === 'Escape' && skillsName) setSkillsName(null);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [showCreate, configureName, snapshotName]);
+  }, [showCreate, configureName, snapshotName, skillsName]);
 
   const currentInstance = view.page === 'desktop'
     ? instances.find(i => i.name === view.name)
@@ -228,6 +233,9 @@ function App() {
     case 'channels':
       content = html`<${ChannelAssets} addToast=${addToast} />`;
       break;
+    case 'characters':
+      content = html`<${CharacterAssets} addToast=${addToast} />`;
+      break;
     case 'image':
       content = html`<${ImagePage} addToast=${addToast} />`;
       break;
@@ -252,6 +260,7 @@ function App() {
           onDesktop=${navigate}
           onConfigure=${(name) => setConfigureName(name)}
           onSnapshot=${onSnapshot}
+          onSkills=${(name) => setSkillsName(name)}
           onCreateClick=${() => setShowCreate(true)}
         />
       `;
@@ -273,8 +282,16 @@ function App() {
       <${ConfigureDialog}
         instanceName=${configureName}
         currentModelAssetId=${(instances.find(i => i.name === configureName) || {}).model_asset_id || ''}
+        currentCharacterAssetId=${(instances.find(i => i.name === configureName) || {}).character_asset_id || ''}
         onClose=${() => setConfigureName(null)}
         onConfigure=${onConfigure}
+      />
+    `}
+    ${skillsName && html`
+      <${SkillManagerDialog}
+        instanceName=${skillsName}
+        onClose=${() => setSkillsName(null)}
+        addToast=${addToast}
       />
     `}
     ${snapshotName && html`

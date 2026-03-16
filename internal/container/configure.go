@@ -21,6 +21,7 @@ type ConfigureParams struct {
 	AppID        string // Lark/Feishu App ID
 	AppSecret    string // Lark/Feishu App Secret
 	BotName      string // bot display name for text @mention detection
+	Soul         *SoulParams // optional character to inject before gateway starts
 }
 
 // openclawChannelName maps ClawSandbox channel names to OpenClaw plugin IDs.
@@ -53,6 +54,15 @@ func Configure(cli *docker.Client, p ConfigureParams) error {
 		"--skip-health",
 	}); err != nil {
 		return fmt.Errorf("onboard: %w", err)
+	}
+
+	// Inject SOUL.md immediately after onboard (which creates the workspace).
+	// This must happen BEFORE the gateway starts so the character is part of
+	// the initial system prompt bootstrap.
+	if p.Soul != nil {
+		if err := InjectSoul(cli, p.ContainerID, *p.Soul); err != nil {
+			return fmt.Errorf("inject soul: %w", err)
+		}
 	}
 
 	// Set default model (runs as "node").
@@ -327,6 +337,46 @@ func ConfigStatus(cli *docker.Client, containerID string) (*ConfigInfo, error) {
 	}
 
 	return info, nil
+}
+
+// SoulParams holds the fields for rendering a SOUL.md character file.
+type SoulParams struct {
+	Name       string
+	Bio        string
+	Lore       string
+	Style      string
+	Topics     string
+	Adjectives string
+}
+
+// InjectSoul renders the character fields into a SOUL.md file and writes it
+// into the container. The OpenClaw gateway watches this file for changes,
+// so no restart is needed.
+func InjectSoul(cli *docker.Client, containerID string, p SoulParams) error {
+	var sb strings.Builder
+	sb.WriteString("# " + p.Name + "\n")
+	if p.Bio != "" {
+		sb.WriteString("\n## Bio\n" + p.Bio + "\n")
+	}
+	if p.Lore != "" {
+		sb.WriteString("\n## Background\n" + p.Lore + "\n")
+	}
+	if p.Style != "" {
+		sb.WriteString("\n## Communication Style\n" + p.Style + "\n")
+	}
+	if p.Topics != "" {
+		sb.WriteString("\n## Topics of Interest\n" + p.Topics + "\n")
+	}
+	if p.Adjectives != "" {
+		sb.WriteString("\n## Personality Traits\n" + p.Adjectives + "\n")
+	}
+
+	content := sb.String()
+	// Write SOUL.md to the workspace directory where OpenClaw actually reads it.
+	// The workspace is at ~/.openclaw/workspace/ and Gateway watches it for changes.
+	return dockerExecAs(cli, containerID, "node", []string{
+		"bash", "-c", fmt.Sprintf("cat > /home/node/.openclaw/workspace/SOUL.md << 'CLAWSANDBOX_EOF'\n%sCLAWSANDBOX_EOF", content),
+	})
 }
 
 // ExecAs runs a command inside a container as the specified user (public wrapper).

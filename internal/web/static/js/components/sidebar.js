@@ -10,6 +10,7 @@ export function Sidebar({ currentRoute, onNavigate }) {
       items: [
         { route: '#/assets/models', label: t('sidebar.models'), icon: '🤖' },
         { route: '#/assets/channels', label: t('sidebar.channels'), icon: '💬' },
+        { route: '#/assets/characters', label: t('sidebar.characters'), icon: '🎭' },
       ],
     },
     {

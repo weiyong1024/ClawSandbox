@@ -339,6 +339,125 @@ func (s *Server) handleTestChannelAsset(w http.ResponseWriter, r *http.Request) 
 	})
 }
 
+// --- Character Asset Handlers ---
+
+func (s *Server) handleListCharacterAssets(w http.ResponseWriter, r *http.Request) {
+	store, err := s.loadAssets()
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"data": store.ListCharacters()})
+}
+
+type createCharacterRequest struct {
+	Name       string `json:"name"`
+	Bio        string `json:"bio"`
+	Lore       string `json:"lore"`
+	Style      string `json:"style"`
+	Topics     string `json:"topics"`
+	Adjectives string `json:"adjectives"`
+}
+
+func (s *Server) handleCreateCharacterAsset(w http.ResponseWriter, r *http.Request) {
+	var req createCharacterRequest
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid JSON body")
+		return
+	}
+	if req.Name == "" {
+		writeError(w, http.StatusBadRequest, "name is required")
+		return
+	}
+
+	store, err := s.loadAssets()
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	asset := &state.CharacterAsset{
+		ID:         generateID(),
+		Name:       req.Name,
+		Bio:        req.Bio,
+		Lore:       req.Lore,
+		Style:      req.Style,
+		Topics:     req.Topics,
+		Adjectives: req.Adjectives,
+	}
+
+	store.AddCharacter(asset)
+	if err := store.SaveAssets(); err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	writeJSON(w, http.StatusCreated, map[string]any{"data": asset})
+}
+
+func (s *Server) handleUpdateCharacterAsset(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+
+	var req createCharacterRequest
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid JSON body")
+		return
+	}
+
+	store, err := s.loadAssets()
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	existing := store.GetCharacter(id)
+	if existing == nil {
+		writeError(w, http.StatusNotFound, "character asset not found")
+		return
+	}
+
+	if req.Name != "" {
+		existing.Name = req.Name
+	}
+	existing.Bio = req.Bio
+	existing.Lore = req.Lore
+	existing.Style = req.Style
+	existing.Topics = req.Topics
+	existing.Adjectives = req.Adjectives
+
+	if !store.UpdateCharacter(existing) {
+		writeError(w, http.StatusNotFound, "character asset not found")
+		return
+	}
+	if err := store.SaveAssets(); err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{"data": existing})
+}
+
+func (s *Server) handleDeleteCharacterAsset(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+
+	store, err := s.loadAssets()
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	if !store.RemoveCharacter(id) {
+		writeError(w, http.StatusNotFound, "character asset not found")
+		return
+	}
+	if err := store.SaveAssets(); err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{"data": map[string]string{"status": "deleted"}})
+}
+
 func providerDisplayName(provider string) string {
 	switch provider {
 	case "anthropic":

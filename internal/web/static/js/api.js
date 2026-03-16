@@ -46,6 +46,18 @@ export const api = {
   deleteChannelAsset: (id)         => request('DELETE', `/assets/channels/${encodeURIComponent(id)}`),
   testChannelAsset:   (data)       => request('POST',   '/assets/channels/test', data),
 
+  // Skills (per-instance)
+  listInstanceSkills: (name)       => request('GET',    `/instances/${encodeURIComponent(name)}/skills`),
+  installSkill:       (name, slug) => request('POST',   `/instances/${encodeURIComponent(name)}/skills/install`, { slug }),
+  uninstallSkill:     (name, slug) => request('DELETE', `/instances/${encodeURIComponent(name)}/skills/${encodeURIComponent(slug)}`),
+  searchClawHub:      (q)          => request('GET',    `/skills/search?q=${encodeURIComponent(q)}`),
+
+  // Character assets
+  listCharacterAssets:  ()           => request('GET',    '/assets/characters'),
+  createCharacterAsset: (data)       => request('POST',   '/assets/characters', data),
+  updateCharacterAsset: (id, data)   => request('PUT',    `/assets/characters/${encodeURIComponent(id)}`, data),
+  deleteCharacterAsset: (id)         => request('DELETE', `/assets/characters/${encodeURIComponent(id)}`),
+
   // Snapshots
   listSnapshots:  ()     => request('GET',    '/snapshots'),
   createSnapshot: (data) => request('POST',   '/snapshots', data),
