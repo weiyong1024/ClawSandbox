@@ -89,7 +89,7 @@ Think of ClawFleet as **your AI company**. Assets are the tools and resources yo
 
 ![Characters](docs/images/assets-characters.png)
 
-**Assets → Channels** — connect messaging platforms (Telegram, Discord, Slack, etc.). These are the "workstations" where your employees serve customers. Optional; validated before saving. Slack follows OpenClaw Socket Mode and uses both a Bot Token and an App Token.
+**Assets → Channels** — connect messaging platforms (Telegram, Discord, Slack, etc.). These are the "workstations" where your employees serve customers. Optional; validated before saving.
 
 ![Channels](docs/images/assets-channels.png)
 
