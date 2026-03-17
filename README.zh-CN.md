@@ -89,7 +89,7 @@ clawfleet dashboard serve
 
 ![Character 配置](docs/images/assets-characters.png)
 
-**资产管理 → Channel 配置** — 接入消息平台（Telegram、Discord、Slack 等），这是员工服务客户的「工位」。可选；保存前自动验证。Slack 跟随 OpenClaw 默认的 Socket Mode，需要同时提供 Bot Token 和 App Token。
+**资产管理 → Channel 配置** — 接入消息平台（Telegram、Discord、Slack 等），这是员工服务客户的「工位」。可选；保存前自动验证。
 
 ![Channel 配置](docs/images/assets-channels.png)
 
