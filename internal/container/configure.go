@@ -355,6 +355,7 @@ type SoulParams struct {
 func InjectSoul(cli *docker.Client, containerID string, p SoulParams) error {
 	var sb strings.Builder
 	sb.WriteString("# " + p.Name + "\n")
+	sb.WriteString("\n**You are " + p.Name + ". Stay in character at all times. Every response must reflect this persona's voice, personality, and perspective. Never break character or revert to a generic assistant.**\n")
 	if p.Bio != "" {
 		sb.WriteString("\n## Bio\n" + p.Bio + "\n")
 	}
