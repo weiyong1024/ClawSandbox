@@ -3,9 +3,9 @@ import { useLang } from '../i18n.js';
 import { api } from '../api.js';
 
 const MODEL_PRESETS = {
-  anthropic: ['claude-sonnet-4-6', 'claude-haiku-4-5-20251001'],
-  openai: ['gpt-4o', 'gpt-4o-mini', 'o3-mini'],
-  google: ['gemini-2.0-flash', 'gemini-2.5-pro'],
+  anthropic: ['claude-opus-4-6', 'claude-sonnet-4-6'],
+  openai: ['gpt-5.4', 'o3', 'gpt-5-mini'],
+  google: ['gemini-3.1-pro-preview', 'gemini-3-flash-preview', 'gemini-2.5-pro'],
   deepseek: ['deepseek-chat', 'deepseek-reasoner'],
 };
 

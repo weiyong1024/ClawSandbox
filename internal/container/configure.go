@@ -66,7 +66,7 @@ func Configure(cli *docker.Client, p ConfigureParams) error {
 	}
 
 	// Set default model (runs as "node").
-	// OpenClaw expects fully qualified model IDs like "openai/gpt-4o".
+	// OpenClaw expects fully qualified model IDs like "openai/gpt-5.4".
 	// If the user passes a bare model name, prefix it with the provider.
 	if p.Model != "" {
 		model := p.Model
@@ -292,7 +292,7 @@ func ConfigStatus(cli *docker.Client, containerID string) (*ConfigInfo, error) {
 
 	info := &ConfigInfo{Configured: true}
 
-	// Extract model and provider from "openai/gpt-4o" format.
+	// Extract model and provider from "openai/gpt-5.4" format.
 	if m := cfg.Agents.Defaults.Model.Primary; m != "" {
 		info.Model = m
 		if parts := strings.SplitN(m, "/", 2); len(parts) == 2 {
