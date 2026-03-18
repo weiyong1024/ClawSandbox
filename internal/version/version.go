@@ -1,6 +1,6 @@
 package version
 
-import "strings"
+import "regexp"
 
 // Injected at build time via ldflags. See Makefile / .goreleaser.yml.
 var (
@@ -9,21 +9,16 @@ var (
 	BuildDate = "unknown"
 )
 
+var releaseTagPattern = regexp.MustCompile(`^v?\d+\.\d+\.\d+$`)
+
 // ImageTag returns the Docker image tag corresponding to this CLI version.
-// Release builds (e.g. "v0.1.0") use the version directly; dev builds fall
-// back to "latest". Git metadata suffixes like "-dirty" or "-3-gabcdef" are
-// stripped so the tag always matches a real image.
+// Only exact release tags (e.g. "v0.1.0") map to release images. Local git
+// describe builds such as "v0.1.0-44-gabcdef" or dirty builds fall back to
+// "latest" so development binaries do not accidentally target an old release
+// image.
 func ImageTag() string {
-	if Version == "dev" {
-		return "latest"
+	if releaseTagPattern.MatchString(Version) {
+		return Version
 	}
-	tag := Version
-	tag = strings.TrimSuffix(tag, "-dirty")
-	// Strip git describe distance suffix (e.g. "v0.1.0-3-gabcdef" → "v0.1.0")
-	if idx := strings.Index(tag, "-"); idx > 0 {
-		if rest := tag[idx+1:]; len(rest) > 0 && rest[0] >= '0' && rest[0] <= '9' {
-			tag = tag[:idx]
-		}
-	}
-	return tag
+	return "latest"
 }
