@@ -27,13 +27,16 @@ Dependency rule: ClawFleet → ClawSandbox (never reverse).
 
 ## Workflow
 
-Before starting any work, always pull the latest remote main branch:
+This is a multi-contributor project with rapid iteration. Before planning or starting any task in a session:
 
-```bash
-git fetch origin
-git checkout main
-git pull origin main
-```
+1. **Sync to latest main** — always pull the latest remote main branch first:
+   ```bash
+   git fetch origin
+   git checkout main
+   git pull origin main
+   ```
+2. **Build full context** — read the codebase, documentation (CLAUDE.md, README, SYSTEM_DESIGN, etc.), and project memory thoroughly. Understand recent changes by reviewing git log and any files touched by recent commits.
+3. **Design from current state** — ensure all design decisions and implementation plans are based on a comprehensive understanding of the project's latest state, not assumptions from prior sessions.
 
 Then create a feature branch from the up-to-date main. Never work directly on a stale branch.
 
