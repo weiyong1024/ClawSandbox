@@ -29,7 +29,7 @@ var dashboardOpenCmd = &cobra.Command{
 
 func init() {
 	dashboardOpenCmd.Flags().IntVar(&dashboardOpenPort, "port", 8080, "Dashboard port")
-	dashboardCmd.AddCommand(dashboardServeCmd, dashboardStopCmd, dashboardRestartCmd, dashboardOpenCmd)
+	dashboardCmd.AddCommand(dashboardServeCmd, dashboardStartCmd, dashboardStopCmd, dashboardRestartCmd, dashboardStatusCmd, dashboardOpenCmd)
 }
 
 func openURL(url string) error {

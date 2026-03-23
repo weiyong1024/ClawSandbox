@@ -23,6 +23,20 @@ var dashboardStopCmd = &cobra.Command{
 }
 
 func runDashboardStop(cmd *cobra.Command, args []string) error {
+	// Try service manager first
+	mgr := NewServiceManager()
+	if installed, _ := mgr.IsInstalled(); installed {
+		if running, _ := mgr.IsRunning(); running {
+			fmt.Printf("Stopping Dashboard daemon ... ")
+			if err := mgr.Stop(); err != nil {
+				return fmt.Errorf("failed to stop: %w", err)
+			}
+			fmt.Println("done")
+			return nil
+		}
+	}
+
+	// Fall back to PID-based stop
 	pid, pidPath, err := readPIDFile()
 	if err != nil {
 		// PID file missing — try to find the process by port.
@@ -64,7 +78,7 @@ func runDashboardStop(cmd *cobra.Command, args []string) error {
 	if pidPath != "" {
 		os.Remove(pidPath)
 	}
-	fmt.Println("✓")
+	fmt.Println("done")
 	return nil
 }
 

@@ -29,6 +29,8 @@ export function ImagePage({ addToast }) {
   const [loading, setLoading] = useState(true);
   const [building, setBuilding] = useState(false);
   const [buildLogs, setBuildLogs] = useState([]);
+  const [pulling, setPulling] = useState(false);
+  const [pullLogs, setPullLogs] = useState([]);
   const [selectedFlavor, setSelectedFlavor] = useState('lightweight');
 
   const checkStatus = useCallback(async () => {
@@ -44,39 +46,55 @@ export function ImagePage({ addToast }) {
 
   useEffect(() => { checkStatus(); }, [checkStatus]);
 
+  const readSSE = async (endpoint, setLogs, successKey, failKey) => {
+    const proto = location.protocol === 'https:' ? 'https:' : 'http:';
+    const url = `${proto}//${location.host}${endpoint}`;
+    const response = await fetch(url, { method: 'POST' });
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop();
+
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const msg = line.slice(6);
+          setLogs(prev => [...prev, msg]);
+        }
+        if (line.startsWith('event: done')) {
+          addToast(t(successKey), 'success');
+        }
+        if (line.startsWith('event: error')) {
+          addToast(t(failKey), 'error');
+        }
+      }
+    }
+  };
+
+  const handlePull = async () => {
+    setPulling(true);
+    setPullLogs([]);
+    try {
+      await readSSE('/api/v1/image/pull', setPullLogs, 'image.pullSuccess', 'image.pullFailed');
+    } catch (err) {
+      addToast(err.message, 'error');
+    } finally {
+      setPulling(false);
+      checkStatus();
+    }
+  };
+
   const handleBuild = async () => {
     setBuilding(true);
     setBuildLogs([]);
-
     try {
-      const proto = location.protocol === 'https:' ? 'https:' : 'http:';
-      const url = `${proto}//${location.host}/api/v1/image/build`;
-      const response = await fetch(url, { method: 'POST' });
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = '';
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop();
-
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const msg = line.slice(6);
-            setBuildLogs(prev => [...prev, msg]);
-          }
-          if (line.startsWith('event: done')) {
-            addToast(t('image.buildSuccess'), 'success');
-          }
-          if (line.startsWith('event: error')) {
-            addToast(t('image.buildFailed'), 'error');
-          }
-        }
-      }
+      await readSSE('/api/v1/image/build', setBuildLogs, 'image.buildSuccess', 'image.buildFailed');
     } catch (err) {
       addToast(err.message, 'error');
     } finally {
@@ -135,10 +153,23 @@ export function ImagePage({ addToast }) {
       </div>
 
       <div class="image-actions">
-        <button class="btn btn-primary" onClick=${handleBuild} disabled=${building}>
+        <button class="btn btn-primary" onClick=${handlePull} disabled=${pulling || building}>
+          ${pulling ? t('image.pulling') : t('image.pull')}
+        </button>
+        <button class="btn btn-secondary" onClick=${handleBuild} disabled=${building || pulling}>
           ${building ? t('image.building') : t('image.build')}
         </button>
+        <span class="image-action-hint">${t('image.pullHint')}</span>
       </div>
+
+      ${pullLogs.length > 0 && html`
+        <div class="image-section">
+          <h3 class="section-title">${t('image.pullLog')}</h3>
+          <div class="image-build-log">
+            ${pullLogs.map((line, i) => html`<div key=${i} class="logs-line">${line}</div>`)}
+          </div>
+        </div>
+      `}
 
       ${buildLogs.length > 0 && html`
         <div class="image-section">

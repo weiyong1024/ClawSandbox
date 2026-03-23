@@ -84,7 +84,7 @@ clawfleet logs <name> [-f]            # 查看实例日志
 ```yaml
 # 基础镜像配置
 image:
-  name: "clawfleet/openclaw"
+  name: "ghcr.io/clawfleet/clawfleet"
   tag: "latest"
 
 # 端口范围
@@ -102,7 +102,7 @@ naming:
   prefix: "claw"      # 实例名: claw-1, claw-2, ...
 ```
 
-### 3.2 Docker 镜像 (clawfleet/openclaw)
+### 3.2 Docker 镜像 (ghcr.io/clawfleet/clawfleet)
 
 **基础镜像选择：** `node:22-bookworm`（与 OpenClaw 官方 Docker 方案一致）
 
@@ -488,7 +488,7 @@ git tag v0.1.0 && git push origin v0.1.0
    │   x amd64/arm64) │                        │
    └────────┬─────────┴──────────┬─────────────┘
             ▼                    ▼
-     GitHub Release         ghcr.io/weiyong1024/clawfleet
+     GitHub Release         ghcr.io/clawfleet/clawfleet
 ```
 
 ### 共享版本包 (`internal/version/`)
@@ -501,7 +501,7 @@ git tag v0.1.0 && git push origin v0.1.0
 
 ### 镜像命名与标签
 
-- **仓库地址**：`ghcr.io/weiyong1024/clawfleet`
+- **仓库地址**：`ghcr.io/clawfleet/clawfleet`
 - **默认标签**：运行时通过 `version.ImageTag()` 动态确定
 - `clawfleet build` 同时打 `:<version>` 和 `:latest` 两个标签
 - `clawfleet create` 使用 `:<version>` 确保 CLI 与镜像版本一致
@@ -512,7 +512,7 @@ git tag v0.1.0 && git push origin v0.1.0
 
 ```
 本地未找到镜像
-  → docker pull ghcr.io/weiyong1024/clawfleet:0.1.0
+  → docker pull ghcr.io/clawfleet/clawfleet:0.1.0
   → 成功？继续创建
   → 失败？提示用户执行 clawfleet build
 ```
@@ -524,7 +524,7 @@ git tag v0.1.0 && git push origin v0.1.0
 | 任务 | 工具 | 产出 |
 |------|------|------|
 | `release` | GoReleaser | 4 个平台的 CLI 二进制 → GitHub Release |
-| `docker` | docker/build-push-action | 镜像 → `ghcr.io/weiyong1024/clawfleet:<version>` + `:latest` |
+| `docker` | docker/build-push-action | 镜像 → `ghcr.io/clawfleet/clawfleet:<version>` + `:latest` |
 
 ### 发版流程（维护者操作）
 

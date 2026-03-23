@@ -50,34 +50,23 @@ OpenClaw is a self-hosted personal AI assistant that connects to 20+ messaging p
 ## Requirements
 
 - macOS or Linux
-- A Docker environment (e.g. [Docker Desktop](https://www.docker.com/products/docker-desktop/))
 
 ## Quick Start
 
-### 1. Install
-
 ```bash
-git clone https://github.com/weiyong1024/ClawFleet.git
-cd ClawFleet
-make build
-# If Go is missing, ClawFleet bootstraps the Go version from go.mod
-# into a user-local toolchain directory automatically.
-# Optionally install to PATH (otherwise use ./bin/clawfleet in place of clawfleet below):
-sudo make install
+curl -fsSL https://clawfleet.io/install.sh | sh
 ```
 
-### 2. Launch Dashboard
+This single command will:
+1. Install Docker if needed (Colima on macOS, Docker Engine on Linux)
+2. Download and install the `clawfleet` CLI
+3. Pull the pre-built sandbox image (~1.4 GB)
+4. Start the Dashboard as a background daemon
+5. Open http://localhost:8080 in your browser
 
-```bash
-clawfleet dashboard serve
-# Open http://localhost:8080
-```
+> **Manual install?** See the [Getting Started](https://github.com/weiyong1024/ClawFleet/wiki/Getting-Started) wiki page.
 
-### 3. Build Image
-
-Click **"System → Image"** in the Dashboard and build the sandbox image (~1.4 GB, first build takes several minutes).
-
-### 4. Run Your Company
+### Run Your Company
 
 Think of ClawFleet as **your AI company**. Assets are the tools and resources your company owns; Fleet is your team of AI employees. You assign different tools to different employees, and put your AI workforce into production.
 

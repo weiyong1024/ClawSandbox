@@ -2,6 +2,7 @@ package web
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -53,6 +54,41 @@ func (s *Server) handleImageBuild(w http.ResponseWriter, r *http.Request) {
 		writeSSE(w, "error", err.Error())
 	} else {
 		writeSSE(w, "done", "image built successfully")
+	}
+	flusher.Flush()
+}
+
+// handleImagePull pulls the Docker image from the registry and streams progress via SSE.
+func (s *Server) handleImagePull(w http.ResponseWriter, r *http.Request) {
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		writeError(w, http.StatusInternalServerError, "streaming not supported")
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+
+	repo := s.config.Image.Name
+	tag := s.config.Image.Tag
+	pr, pw := newLineWriter(r.Context())
+
+	done := make(chan error, 1)
+	go func() {
+		done <- container.PullImage(s.docker, repo, tag, pw)
+		pw.Close()
+	}()
+
+	for line := range pr {
+		writeSSE(w, "log", line)
+		flusher.Flush()
+	}
+
+	if err := <-done; err != nil {
+		writeSSE(w, "error", err.Error())
+	} else {
+		writeSSE(w, "done", fmt.Sprintf("image %s:%s pulled successfully", repo, tag))
 	}
 	flusher.Flush()
 }

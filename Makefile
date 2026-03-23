@@ -1,7 +1,7 @@
 BINARY     = clawfleet
 BUILD_DIR  = ./bin
 MODULE     = github.com/weiyong1024/clawfleet
-IMAGE      = clawfleet/openclaw:latest
+IMAGE      = ghcr.io/clawfleet/clawfleet:latest
 GO_BOOTSTRAP = ./scripts/ensure-go.sh --print-path
 
 VERSION    ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)

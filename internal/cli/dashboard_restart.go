@@ -19,6 +19,18 @@ func init() {
 }
 
 func runDashboardRestart(cmd *cobra.Command, args []string) error {
+	// Try service manager first
+	mgr := NewServiceManager()
+	if installed, _ := mgr.IsInstalled(); installed {
+		fmt.Printf("Restarting Dashboard daemon ... ")
+		if err := mgr.Restart(); err != nil {
+			return fmt.Errorf("failed to restart: %w", err)
+		}
+		fmt.Println("done")
+		return nil
+	}
+
+	// Fall back to stop + serve
 	pid, _, _ := readPIDFile()
 	if pid > 0 {
 		fmt.Println("Stopping existing Dashboard...")

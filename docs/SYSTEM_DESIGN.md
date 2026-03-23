@@ -83,7 +83,7 @@ clawfleet logs <name> [-f]            # View instance logs
 
 ```yaml
 image:
-  name: "clawfleet/openclaw"
+  name: "ghcr.io/clawfleet/clawfleet"
   tag: "latest"
 
 ports:
@@ -98,7 +98,7 @@ naming:
   prefix: "claw"      # Instance names: claw-1, claw-2, ...
 ```
 
-### 3.2 Docker Image (clawfleet/openclaw)
+### 3.2 Docker Image (ghcr.io/clawfleet/clawfleet)
 
 **Base image:** `node:22-bookworm` — consistent with OpenClaw's official Docker setup.
 
@@ -476,7 +476,7 @@ git tag v0.1.0 && git push origin v0.1.0
    │   x amd64/arm64) │                        │
    └────────┬─────────┴──────────┬─────────────┘
             ▼                    ▼
-     GitHub Release         ghcr.io/weiyong1024/clawfleet
+     GitHub Release         ghcr.io/clawfleet/clawfleet
 ```
 
 ### Shared version package (`internal/version/`)
@@ -489,7 +489,7 @@ The `ImageTag()` helper derives the Docker image tag from the CLI version:
 
 ### Image naming and tagging
 
-- **Registry**: `ghcr.io/weiyong1024/clawfleet`
+- **Registry**: `ghcr.io/clawfleet/clawfleet`
 - **Default tag**: determined at runtime via `version.ImageTag()`
 - `clawfleet build` tags the image with both `:<version>` and `:latest`
 - `clawfleet create` uses `:<version>` to ensure CLI-image version consistency
@@ -500,7 +500,7 @@ When `clawfleet create` (or the Dashboard's create action) finds the image missi
 
 ```
 image not found locally
-  → docker pull ghcr.io/weiyong1024/clawfleet:0.1.0
+  → docker pull ghcr.io/clawfleet/clawfleet:0.1.0
   → success? proceed with create
   → fail? suggest `clawfleet build`
 ```
@@ -512,7 +512,7 @@ Triggered on `v*` tag push. Two parallel jobs:
 | Job | Tool | Output |
 |-----|------|--------|
 | `release` | GoReleaser | 4 CLI binaries → GitHub Release |
-| `docker` | docker/build-push-action | Image → `ghcr.io/weiyong1024/clawfleet:<version>` + `:latest` |
+| `docker` | docker/build-push-action | Image → `ghcr.io/clawfleet/clawfleet:<version>` + `:latest` |
 
 ### Release workflow (for maintainers)
 

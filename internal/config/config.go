@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	DefaultImageName = "ghcr.io/weiyong1024/clawfleet"
+	DefaultImageName = "ghcr.io/clawfleet/clawfleet"
 	DefaultNoVNCBase    = 6901
 	DefaultGatewayBase  = 18789
 	DefaultMemoryLimit  = "4g"
