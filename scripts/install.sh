@@ -329,8 +329,15 @@ pull_docker_image() {
 # Daemon setup
 # ---------------------------------------------------------------------------
 setup_daemon() {
+  # macOS: local dev machine, bind localhost only
+  # Linux: typically a remote server, bind all interfaces
+  case "$(uname -s)" in
+    Darwin) dashboard_host="127.0.0.1" ;;
+    *)      dashboard_host="0.0.0.0" ;;
+  esac
+
   step "Starting ClawFleet Dashboard..."
-  if "$install_dir/$BINARY" dashboard start --port 8080 2>&1; then
+  if "$install_dir/$BINARY" dashboard start --port 8080 --host "$dashboard_host" 2>&1; then
     ok "Dashboard started"
   else
     warn "Could not start daemon automatically."
@@ -356,7 +363,11 @@ print_success() {
   printf "\n${BOLD}${GREEN}"
   printf "  ClawFleet installed successfully!\n"
   printf "${RESET}\n"
-  printf "  Dashboard:  ${CYAN}http://localhost:8080${RESET}\n"
+  if [ "$(uname -s)" = "Darwin" ]; then
+    printf "  Dashboard:  ${CYAN}http://localhost:8080${RESET}\n"
+  else
+    printf "  Dashboard:  ${CYAN}http://0.0.0.0:8080${RESET} (accessible from your network)\n"
+  fi
   printf "  Version:    %s\n" "$version"
   printf "\n"
   printf "  ${BOLD}Next steps:${RESET}\n"
@@ -369,10 +380,6 @@ print_success() {
   printf "    clawfleet dashboard stop     Stop the daemon\n"
   printf "    clawfleet create 3           Create 3 instances\n"
   printf "    clawfleet list               List all instances\n"
-  printf "\n"
-  printf "  ${BOLD}Remote access:${RESET}\n"
-  printf "    clawfleet dashboard stop\n"
-  printf "    clawfleet dashboard start --host 0.0.0.0\n"
   printf "\n"
   printf "  Docs:    ${CYAN}https://github.com/clawfleet/ClawFleet/wiki${RESET}\n"
   printf "\n"
