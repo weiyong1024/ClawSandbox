@@ -64,6 +64,13 @@ This single command will:
 4. Start the Dashboard as a background daemon
 5. Open http://localhost:8080 in your browser
 
+On Linux the Dashboard listens on all interfaces (`0.0.0.0:8080`) by default so you can access it remotely. On macOS it binds to `127.0.0.1` (localhost only). To restrict access on Linux to localhost only:
+
+```bash
+clawfleet dashboard stop
+clawfleet dashboard start --host 127.0.0.1
+```
+
 > **Manual install?** See the [Getting Started](https://github.com/clawfleet/ClawFleet/wiki/Getting-Started) wiki page.
 
 ### Run Your Company
