@@ -18,9 +18,14 @@ func NewServiceManager() ServiceManager {
 	return &pidManager{}
 }
 
-type pidManager struct{}
+type pidManager struct {
+	port int
+	host string
+}
 
 func (m *pidManager) Install(binaryPath string, port int, host string) error {
+	m.port = port
+	m.host = host
 	return nil
 }
 
@@ -40,7 +45,14 @@ func (m *pidManager) Start() error {
 		return fmt.Errorf("opening log file: %w", err)
 	}
 
-	cmd := exec.Command(binPath, "dashboard", "serve")
+	args := []string{"dashboard", "serve"}
+	if m.host != "" {
+		args = append(args, "--host", m.host)
+	}
+	if m.port > 0 {
+		args = append(args, "--port", fmt.Sprintf("%d", m.port))
+	}
+	cmd := exec.Command(binPath, args...)
 	cmd.Stdout = logFile
 	cmd.Stderr = logFile
 	cmd.SysProcAttr = &syscall.SysProcAttr{}

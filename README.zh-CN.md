@@ -64,6 +64,13 @@ curl -fsSL https://clawfleet.io/install.sh | sh
 4. 以后台守护进程启动仪表盘
 5. 在浏览器中打开 http://localhost:8080
 
+Linux 环境下 Dashboard 默认监听所有网络接口（`0.0.0.0:8080`），可直接远程访问。macOS 仅绑定本机（`127.0.0.1`）。如需限制 Linux 只允许本机访问：
+
+```bash
+clawfleet dashboard stop
+clawfleet dashboard start --host 127.0.0.1
+```
+
 > **手动安装？** 参阅[快速入门](https://github.com/clawfleet/ClawFleet/wiki/Getting-Started)。
 
 ### 经营你的公司
