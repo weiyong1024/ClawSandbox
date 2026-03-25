@@ -26,6 +26,7 @@ export const api = {
   destroyInstance:(name)        => request('DELETE',  `/instances/${encodeURIComponent(name)}`),
   batchDestroyInstances:(names) => request('POST',  '/instances/batch-destroy', { names }),
   resetInstance:  (name)        => request('POST',   `/instances/${encodeURIComponent(name)}/reset`),
+  restartBot:     (name)        => request('POST',   `/instances/${encodeURIComponent(name)}/restart-bot`),
   configureInstance: (name, config) => request('POST', `/instances/${encodeURIComponent(name)}/configure`, config),
   getConfigStatus:   (name)        => request('GET',  `/instances/${encodeURIComponent(name)}/configure/status`),
 

@@ -145,6 +145,22 @@ function App() {
     })();
   };
 
+  const onConsole = (name) => {
+    window.open(`/console/${name}/`, '_blank');
+  };
+
+  const onRestartBot = async (name) => {
+    if (!confirm(t('confirm.restartBot', name))) return;
+    await withPending(name, 'restarting', async () => {
+      try {
+        await api.restartBot(name);
+        addToast(t('toast.restartedBot', name), 'success');
+      } catch (err) {
+        addToast(err.message, 'error');
+      }
+    })();
+  };
+
   const onSnapshot = (name) => {
     setSnapshotName(name);
   };
@@ -258,6 +274,8 @@ function App() {
           onStop=${onStop}
           onDestroy=${onDestroy}
           onDesktop=${navigate}
+          onConsole=${onConsole}
+          onRestartBot=${onRestartBot}
           onConfigure=${(name) => setConfigureName(name)}
           onSnapshot=${onSnapshot}
           onSkills=${(name) => setSkillsName(name)}

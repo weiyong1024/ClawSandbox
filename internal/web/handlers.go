@@ -475,6 +475,32 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 	}
 }
 
+// handleRestartBot restarts the OpenClaw gateway process inside a running instance.
+func (s *Server) handleRestartBot(w http.ResponseWriter, r *http.Request) {
+	name := r.PathValue("name")
+	store, err := s.loadStore()
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	inst := store.Get(name)
+	if inst == nil {
+		writeError(w, http.StatusNotFound, fmt.Sprintf("instance %s not found", name))
+		return
+	}
+	if inst.Status != "running" {
+		writeError(w, http.StatusConflict, fmt.Sprintf("instance %s is not running", name))
+		return
+	}
+
+	if err := container.ExecAs(s.docker, inst.ContainerID, "root", []string{"supervisorctl", "restart", "openclaw"}); err != nil {
+		writeError(w, http.StatusInternalServerError, fmt.Sprintf("restart failed: %v", err))
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{"data": map[string]any{"name": name, "restarted": true}})
+}
+
 // writeError writes a JSON error response.
 func writeError(w http.ResponseWriter, status int, msg string) {
 	w.Header().Set("Content-Type", "application/json")

@@ -18,6 +18,7 @@ func (s *Server) registerRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/instances/{name}/logs", s.handleInstanceLogs)
 	mux.HandleFunc("POST /api/v1/instances/{name}/configure", s.handleConfigureInstance)
 	mux.HandleFunc("GET /api/v1/instances/{name}/configure/status", s.handleConfigureStatus)
+	mux.HandleFunc("POST /api/v1/instances/{name}/restart-bot", s.handleRestartBot)
 	mux.HandleFunc("GET /api/v1/image/status", s.handleImageStatus)
 	mux.HandleFunc("POST /api/v1/image/build", s.handleImageBuild)
 	mux.HandleFunc("POST /api/v1/image/pull", s.handleImagePull)
@@ -53,6 +54,9 @@ func (s *Server) registerRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/ws/stats", s.handleWSStats)
 	mux.HandleFunc("GET /api/v1/ws/logs/{name}", s.handleWSLogs)
 	mux.HandleFunc("GET /api/v1/ws/events", s.handleWSEvents)
+
+	// Console reverse proxy (must be before static file handler)
+	mux.HandleFunc("/console/{name}/", s.handleConsoleProxy)
 
 	// Static files (frontend)
 	staticSub, _ := fs.Sub(StaticFS, "static")

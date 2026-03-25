@@ -2,7 +2,7 @@ import { html } from '../lib.js';
 import { useLang } from '../i18n.js';
 import { formatBytes } from '../utils.js';
 
-export function InstanceCard({ instance, stats, pending, selected, onToggleSelect, onStart, onStop, onDestroy, onDesktop, onConfigure, onSnapshot, onSkills }) {
+export function InstanceCard({ instance, stats, pending, selected, onToggleSelect, onStart, onStop, onDestroy, onDesktop, onConsole, onRestartBot, onConfigure, onSnapshot, onSkills }) {
   const { t } = useLang();
   const isRunning = instance.status === 'running';
   const cpu = stats?.cpu_percent ?? 0;
@@ -89,6 +89,7 @@ export function InstanceCard({ instance, stats, pending, selected, onToggleSelec
       <div class="card-actions">
         ${isRunning ? html`
           <button class="btn btn-sm btn-desktop" onClick=${onDesktop} disabled=${busy}>${t('card.desktop')}</button>
+          <button class="btn btn-sm btn-desktop" onClick=${onConsole} disabled=${busy}>${t('card.controlPanel')}</button>
           <button class="btn btn-sm btn-configure" onClick=${onConfigure} disabled=${busy}>
             ${pending === 'configuring' ? t('action.configuring') : t('card.configure')}
           </button>
@@ -100,6 +101,9 @@ export function InstanceCard({ instance, stats, pending, selected, onToggleSelec
               ${t('card.snapshot')}
             </button>
           `}
+          <button class="btn btn-sm btn-reset" onClick=${onRestartBot} disabled=${busy}>
+            ${pending === 'restarting' ? t('action.restarting') : t('card.restartBot')}
+          </button>
           <button class="btn btn-sm btn-warning" onClick=${onStop} disabled=${busy}>
             ${pending === 'stopping' ? t('action.stopping') : t('card.suspend')}
           </button>

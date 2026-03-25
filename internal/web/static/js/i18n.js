@@ -20,6 +20,8 @@ const messages = {
     'dashboard.empty.desc':  'Click "Create Instances" to deploy your first OpenClaw fleet.',
 
     'card.desktop':          '🖥 Desktop',
+    'card.controlPanel':     '⚙ Control Panel',
+    'card.restartBot':       '🔄 Restart Bot',
     'card.suspend':          '⏸ Suspend',
     'card.resume':           '▶ Resume',
     'card.destroy':          '🗑 Destroy',
@@ -48,8 +50,10 @@ const messages = {
     'toast.started':         (name) => `Resumed ${name}`,
     'toast.stopped':         (name) => `Suspended ${name}`,
     'toast.destroyed':       (name) => `Destroyed ${name}`,
+    'toast.restartedBot':    (name) => `Bot in ${name} restarted`,
     'confirm.destroy':       (name) => `Destroy ${name}? This removes the container.`,
     'confirm.batchDestroy':  (n) => `Destroy ${n} selected instance${n > 1 ? 's' : ''}? This cannot be undone.`,
+    'confirm.restartBot':    (name) => `Restart bot in ${name}? It will reconnect to all channels.`,
 
     'batch.selectAll':       'Select All',
     'batch.deselectAll':     'Deselect All',
@@ -61,6 +65,7 @@ const messages = {
     'action.stopping':       'Suspending...',
     'action.destroying':     'Destroying...',
     'action.configuring':    'Configuring...',
+    'action.restarting':     'Restarting...',
 
     'card.configure':        'Configure',
 
@@ -226,6 +231,8 @@ const messages = {
     'dashboard.empty.desc':  '点击「创建实例」部署你的第一个 OpenClaw 军团。',
 
     'card.desktop':          '🖥 桌面',
+    'card.controlPanel':     '⚙ 控制面板',
+    'card.restartBot':       '🔄 重启龙虾',
     'card.suspend':          '⏸ 挂起',
     'card.resume':           '▶ 复位',
     'card.destroy':          '🗑 销毁',
@@ -254,8 +261,10 @@ const messages = {
     'toast.started':         (name) => `已复位 ${name}`,
     'toast.stopped':         (name) => `已挂起 ${name}`,
     'toast.destroyed':       (name) => `已销毁 ${name}`,
+    'toast.restartedBot':    (name) => `${name} 的龙虾已重启`,
     'confirm.destroy':       (name) => `确定销毁 ${name}？这将移除容器。`,
     'confirm.batchDestroy':  (n) => `确定销毁 ${n} 个选中的实例？此操作不可撤销。`,
+    'confirm.restartBot':    (name) => `重启 ${name} 的龙虾？将重新连接所有频道。`,
 
     'batch.selectAll':       '全选',
     'batch.deselectAll':     '取消全选',
@@ -267,6 +276,7 @@ const messages = {
     'action.stopping':       '挂起中...',
     'action.destroying':     '销毁中...',
     'action.configuring':    '配置中...',
+    'action.restarting':     '重启中...',
 
     'card.configure':        '配置',
 
