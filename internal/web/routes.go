@@ -56,7 +56,9 @@ func (s *Server) registerRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/ws/events", s.handleWSEvents)
 
 	// Console reverse proxy (must be before static file handler)
+	// Both with and without trailing slash to catch WebSocket connections
 	mux.HandleFunc("/console/{name}/", s.handleConsoleProxy)
+	mux.HandleFunc("/console/{name}", s.handleConsoleProxy)
 
 	// Static files (frontend)
 	staticSub, _ := fs.Sub(StaticFS, "static")
