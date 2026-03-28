@@ -3,6 +3,7 @@ package web
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/clawfleet/clawfleet/internal/container"
@@ -130,6 +131,7 @@ func (s *Server) handleConfigureInstance(w http.ResponseWriter, r *http.Request)
 	}
 
 	// Resolve character asset into SoulParams so it's injected before gateway starts.
+	// Include roster (teammates) so the bot knows about its fleet.
 	var soul *container.SoulParams
 	if req.CharacterAssetID != "" {
 		assets, loadErr := s.loadAssets()
@@ -142,6 +144,7 @@ func (s *Server) handleConfigureInstance(w http.ResponseWriter, r *http.Request)
 					Style:      ch.Style,
 					Topics:     ch.Topics,
 					Adjectives: ch.Adjectives,
+					Teammates:  buildRoster(name, store, assets),
 				}
 			}
 		}
@@ -179,12 +182,87 @@ func (s *Server) handleConfigureInstance(w http.ResponseWriter, r *http.Request)
 		}
 	}
 
+	// Refresh teammates' SOUL.md so their roster includes this instance.
+	if req.CharacterAssetID != "" {
+		if refreshAssets, err := s.loadAssets(); err == nil {
+			if refreshStore, err := s.loadStore(); err == nil {
+				s.refreshTeammateRosters(name, refreshStore, refreshAssets)
+			}
+		}
+	}
+
 	writeJSON(w, http.StatusOK, map[string]any{
 		"data": map[string]string{
 			"status":  "configured",
 			"message": fmt.Sprintf("Instance %s configured successfully", name),
 		},
 	})
+}
+
+// buildRoster returns the list of teammates for the given instance, excluding
+// itself. Only instances with a character asset are included in the roster.
+func buildRoster(excludeName string, store *state.Store, assets *state.AssetStore) []container.Teammate {
+	instances := store.Snapshot()
+	var teammates []container.Teammate
+	for _, inst := range instances {
+		if inst.Name == excludeName {
+			continue
+		}
+		if inst.CharacterAssetID == "" {
+			continue
+		}
+		ch := assets.GetCharacter(inst.CharacterAssetID)
+		if ch == nil {
+			continue
+		}
+		channelName := ""
+		if inst.ChannelAssetID != "" {
+			if ca := assets.GetChannel(inst.ChannelAssetID); ca != nil {
+				channelName = ca.Channel
+			}
+		}
+		teammates = append(teammates, container.Teammate{
+			Name:    ch.Name,
+			Bio:     ch.Bio,
+			Channel: channelName,
+		})
+	}
+	return teammates
+}
+
+// refreshTeammateRosters rewrites SOUL.md for all other running instances that
+// have a character, so their roster reflects the latest fleet state.
+// Errors are logged but do not fail the calling operation.
+func (s *Server) refreshTeammateRosters(excludeName string, store *state.Store, assets *state.AssetStore) {
+	instances := store.Snapshot()
+	for _, inst := range instances {
+		if inst.Name == excludeName {
+			continue
+		}
+		if inst.CharacterAssetID == "" {
+			continue
+		}
+		if inst.Status != "running" {
+			continue
+		}
+		ch := assets.GetCharacter(inst.CharacterAssetID)
+		if ch == nil {
+			continue
+		}
+		teammates := buildRoster(inst.Name, store, assets)
+		soul := container.SoulParams{
+			Name:       ch.Name,
+			Bio:        ch.Bio,
+			Lore:       ch.Lore,
+			Style:      ch.Style,
+			Topics:     ch.Topics,
+			Adjectives: ch.Adjectives,
+			Teammates:  teammates,
+		}
+		if err := container.InjectSoul(s.docker, inst.ContainerID, soul); err != nil {
+			log.Printf("roster refresh %s: %v", inst.Name, err)
+		}
+	}
 }
 
 // handleConfigureStatus returns the configuration status of an instance.

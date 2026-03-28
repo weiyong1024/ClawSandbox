@@ -237,6 +237,25 @@ func (s *Server) handleStartInstance(w http.ResponseWriter, r *http.Request) {
 	store.SetStatus(name, "running")
 	_ = store.Save()
 
+	// Refresh this instance's SOUL.md with the latest roster
+	// (fleet may have changed while it was stopped).
+	if inst.CharacterAssetID != "" {
+		if assets, err := s.loadAssets(); err == nil {
+			if ch := assets.GetCharacter(inst.CharacterAssetID); ch != nil {
+				soul := container.SoulParams{
+					Name:       ch.Name,
+					Bio:        ch.Bio,
+					Lore:       ch.Lore,
+					Style:      ch.Style,
+					Topics:     ch.Topics,
+					Adjectives: ch.Adjectives,
+					Teammates:  buildRoster(name, store, assets),
+				}
+				_ = container.InjectSoul(s.docker, inst.ContainerID, soul)
+			}
+		}
+	}
+
 	inst.Status = "running"
 	s.events.Publish(Event{Type: EventStarted, Name: name})
 	writeJSON(w, http.StatusOK, map[string]any{"data": instanceToResponse(*inst, nil)})
@@ -309,6 +328,13 @@ func (s *Server) handleDestroyInstance(w http.ResponseWriter, r *http.Request) {
 		_ = os.RemoveAll(filepath.Join(dataDir, "data", name))
 	}
 
+	// Refresh remaining instances' SOUL.md to remove the destroyed instance from their roster.
+	if refreshAssets, err := s.loadAssets(); err == nil {
+		if refreshStore, err := s.loadStore(); err == nil {
+			s.refreshTeammateRosters("", refreshStore, refreshAssets)
+		}
+	}
+
 	s.events.Publish(Event{Type: EventDestroyed, Name: name})
 	writeJSON(w, http.StatusOK, map[string]any{"data": map[string]string{"name": name, "status": "destroyed"}})
 }
@@ -363,6 +389,15 @@ func (s *Server) handleBatchDestroyInstances(w http.ResponseWriter, r *http.Requ
 	}
 
 	_ = store.Save()
+
+	// Refresh remaining instances' roster after batch destroy.
+	if destroyed > 0 {
+		if refreshAssets, err := s.loadAssets(); err == nil {
+			if refreshStore, err := s.loadStore(); err == nil {
+				s.refreshTeammateRosters("", refreshStore, refreshAssets)
+			}
+		}
+	}
 
 	// Publish a single event to trigger UI refresh.
 	if destroyed > 0 {
@@ -441,6 +476,13 @@ func (s *Server) handleResetInstance(w http.ResponseWriter, r *http.Request) {
 		store.SetStatus(name, "running")
 	}
 	_ = store.Save()
+
+	// Instance lost its character — refresh other instances' rosters to remove it.
+	if refreshAssets, err := s.loadAssets(); err == nil {
+		if refreshStore, err := s.loadStore(); err == nil {
+			s.refreshTeammateRosters(name, refreshStore, refreshAssets)
+		}
+	}
 
 	s.events.Publish(Event{Type: EventStopped, Name: name})
 	writeJSON(w, http.StatusOK, map[string]any{

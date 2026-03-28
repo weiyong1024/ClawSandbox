@@ -420,6 +420,13 @@ func ConfigStatus(cli *docker.Client, containerID string) (*ConfigInfo, error) {
 	return info, nil
 }
 
+// Teammate describes another bot in the fleet, for roster injection into SOUL.md.
+type Teammate struct {
+	Name    string // Character.Name — the @mention key
+	Bio     string // Full Character.Bio
+	Channel string // "discord", "telegram", etc.
+}
+
 // SoulParams holds the fields for rendering a SOUL.md character file.
 type SoulParams struct {
 	Name       string
@@ -428,12 +435,12 @@ type SoulParams struct {
 	Style      string
 	Topics     string
 	Adjectives string
+	Teammates  []Teammate
 }
 
-// InjectSoul renders the character fields into a SOUL.md file and writes it
-// into the container. The OpenClaw gateway watches this file for changes,
-// so no restart is needed.
-func InjectSoul(cli *docker.Client, containerID string, p SoulParams) error {
+// RenderSoulMarkdown produces the SOUL.md content from the given parameters.
+// Exported as a pure function for testability.
+func RenderSoulMarkdown(p SoulParams) string {
 	var sb strings.Builder
 	sb.WriteString("# " + p.Name + "\n")
 	sb.WriteString("\n**You are " + p.Name + ". Stay in character at all times. Every response must reflect this persona's voice, personality, and perspective. Never break character or revert to a generic assistant.**\n")
@@ -453,7 +460,35 @@ func InjectSoul(cli *docker.Client, containerID string, p SoulParams) error {
 		sb.WriteString("\n## Personality Traits\n" + p.Adjectives + "\n")
 	}
 
-	content := sb.String()
+	if len(p.Teammates) > 0 {
+		sb.WriteString("\n## Your Team\n")
+		sb.WriteString("You are part of a team of AI agents in a group conversation. Here are your teammates:\n\n")
+		for _, t := range p.Teammates {
+			sb.WriteString(fmt.Sprintf("- **%s**", t.Name))
+			if t.Bio != "" {
+				sb.WriteString(": " + t.Bio)
+			}
+			if t.Channel != "" {
+				sb.WriteString(" (" + t.Channel + ")")
+			}
+			sb.WriteString("\n")
+		}
+		sb.WriteString("\n### How to collaborate\n")
+		sb.WriteString("- When a user's message touches a teammate's expertise, @mention them by name (e.g. @" + p.Teammates[0].Name + ") to invite them into the discussion.\n")
+		sb.WriteString("- When you are @mentioned by a teammate, contribute your perspective on the topic.\n")
+		sb.WriteString("- Do NOT @mention a teammate who has already spoken on this topic — build on their point instead.\n")
+		sb.WriteString("- After the key perspectives have been shared, wrap up with a brief synthesis and yield the floor to the human.\n")
+		sb.WriteString("- When a human speaks, they have priority — respond to them directly.\n")
+	}
+
+	return sb.String()
+}
+
+// InjectSoul renders the character fields into a SOUL.md file and writes it
+// into the container. The OpenClaw gateway watches this file for changes,
+// so no restart is needed.
+func InjectSoul(cli *docker.Client, containerID string, p SoulParams) error {
+	content := RenderSoulMarkdown(p)
 	// Write SOUL.md to the workspace directory where OpenClaw actually reads it.
 	// The workspace is at ~/.openclaw/workspace/ and Gateway watches it for changes.
 	return dockerExecAs(cli, containerID, "node", []string{
