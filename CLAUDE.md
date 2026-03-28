@@ -122,6 +122,13 @@ All design decisions, project structure, and code implementation must follow bes
 - Don't add abstractions, flags, or config options for hypothetical future needs. Solve the current problem directly.
 - Prefer calling existing CLI tools (`docker exec` + `openclaw` CLI) over writing config files directly — this keeps the integration resilient to upstream format changes.
 
+### Prompt-Bearing Markdown is Code
+- SOUL.md drives bot persona and behavior at runtime. Treat its content with the same rigor as source code — not "good enough" prose.
+- Every prompt section must have: explicit judgment criteria (when to act), negative constraints (when NOT to act), and dense, scannable information (no lore dumps).
+- Expect iteration. The first draft of a prompt section is never the final version. Test actual LLM behavior, observe output, adjust wording.
+- When modifying SOUL.md rendering logic (e.g. `RenderSoulMarkdown`, roster injection), verify the generated Markdown reads correctly as a prompt — not just that the Go code compiles.
+- This principle applies to any Markdown file that is consumed by an LLM at runtime (SOUL.md today, potentially others in the future).
+
 ### Verify Before Handoff
 - After fixing a bug or implementing a feature that affects API/server behavior, smoke-test the change yourself (e.g. `curl` requests to the local server, `docker exec` commands) before asking the user to verify on the UI.
 
