@@ -26,6 +26,13 @@ export function ModelAssetDialog({ model, onClose, onSave, addToast }) {
   const isCustom = selectedModel && !presets.includes(selectedModel);
   const effectiveModel = isCustom ? selectedModel : (selectedModel || presets[0] || '');
 
+  const NAME_HINTS = {
+    anthropic: 'e.g. Claude Opus Production',
+    openai: 'e.g. GPT-4o Production',
+    google: 'e.g. Gemini Pro Production',
+    deepseek: 'e.g. DeepSeek Production',
+  };
+
   const handleProviderChange = (newProvider) => {
     setProvider(newProvider);
     setSelectedModel('');
@@ -91,7 +98,7 @@ export function ModelAssetDialog({ model, onClose, onSave, addToast }) {
             <label class="form-label">
               ${t('assets.name')}
               <input type="text" class="form-input" value=${name} onInput=${(e) => setName(e.target.value)}
-                placeholder=${t('assets.nameHint')} />
+                placeholder=${NAME_HINTS[provider] || t('assets.nameHint')} />
             </label>
 
             <label class="form-label">
