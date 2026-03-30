@@ -77,11 +77,12 @@ clawfleet dashboard start --host 127.0.0.1
 通过 SSH 隧道从本地访问远程服务器上的 Dashboard：
 
 ```bash
-ssh -L 8081:127.0.0.1:8080 user@your-server
+ssh -fNL 8081:127.0.0.1:8080 user@your-server
 # 然后浏览器访问 http://localhost:8081
+# 关闭隧道: kill $(lsof -ti:8081)
 ```
 
-这里使用 8081 端口是因为本地 8080 通常已被本地 ClawFleet 占用。你可以使用任意空闲的本地端口。
+`-fN` 参数使隧道在后台运行，关闭终端不会中断连接。这里使用 8081 端口是因为本地 8080 通常已被本地 ClawFleet 占用。
 
 **控制面板**（OpenClaw 内置 Web UI）的 WebSocket 连接需要浏览器[安全上下文](https://developer.mozilla.org/zh-CN/docs/Web/Security/Secure_Contexts)——SSH 隧道可满足此要求。其他 Dashboard 功能（实例管理、配置、重启龙虾等）无需隧道，可通过 HTTP 直接访问。
 </details>

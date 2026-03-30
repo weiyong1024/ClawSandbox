@@ -77,11 +77,12 @@ clawfleet dashboard start --host 127.0.0.1
 To access the Dashboard from your local machine via SSH tunnel:
 
 ```bash
-ssh -L 8081:127.0.0.1:8080 user@your-server
+ssh -fNL 8081:127.0.0.1:8080 user@your-server
 # Then open http://localhost:8081 in your browser
+# To stop the tunnel later: kill $(lsof -ti:8081)
 ```
 
-Port 8081 is used here because 8080 is often occupied by a local ClawFleet instance. You can use any free local port.
+The `-fN` flags run the tunnel in the background so you can close your terminal without breaking the connection. Port 8081 is used here because 8080 is often occupied by a local ClawFleet instance.
 
 The **Control Panel** (OpenClaw's built-in web UI) requires a [secure context](https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts) for WebSocket device identity — the SSH tunnel provides this. All other Dashboard features (fleet management, configuration, Restart Bot, etc.) work without a tunnel via direct HTTP.
 </details>
