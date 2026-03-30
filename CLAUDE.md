@@ -42,6 +42,8 @@ Then create a feature branch from the up-to-date main. Never work directly on a 
 
 **Never push directly to main.** All changes must go through a pull request, even for docs or config-only changes.
 
+**One PR = one branch, all commits before merge.** Never push additional commits to a branch after its PR has been merged — those commits will not be on main. If you have more changes to make, create a new branch from the latest main and open a new PR. Always check `gh pr view <number> --json state` before pushing to a PR branch.
+
 ## Build/Test/Lint Commands
 
 ```bash
@@ -151,7 +153,7 @@ The output of any tech research should be a clear recommendation: compete / inte
 
 ## Growth Strategy Sync
 
-<!-- strategy-bulletin-version: 1 -->
+<!-- strategy-bulletin-version: 2 -->
 
 All Marketer-Sessions (growth, content, distribution) MUST re-read `growth/STRATEGY_BULLETIN.md` before every action cycle (writing content, publishing, making distribution decisions). This file contains the live strategy, target user definition, active decisions, and constraints. It is updated by the lead Marketer-Session; the version comment above is bumped on each update to trigger CLAUDE.md change notifications to all running sessions.
 
