@@ -129,6 +129,17 @@ All design decisions, project structure, and code implementation must follow bes
 - When modifying SOUL.md rendering logic (e.g. `RenderSoulMarkdown`, roster injection), verify the generated Markdown reads correctly as a prompt — not just that the Go code compiles.
 - This principle applies to any Markdown file that is consumed by an LLM at runtime (SOUL.md today, potentially others in the future).
 
+### Technology Research Framework
+When researching an external technology (framework, tool, protocol, or platform), every evaluation must deliver:
+
+1. **Ecological niche comparison** — where does it sit relative to ClawFleet? Same layer (competitor) or different layer (potential complement)?
+2. **If competitor** — can we beat it? Where are our advantages and disadvantages? Should we compete head-on, differentiate, or avoid the overlap?
+3. **If complement** — can the two work together? What's the integration path? Does it require our users to adopt additional skills or tools (e.g., Python, YAML pipelines) that conflict with ClawFleet's "Dashboard-first" ethos?
+4. **Capability transfer** — can we use this technology to directly strengthen ClawFleet? If integration is impractical, are there validated design patterns worth borrowing and reimplementing in our own architecture?
+5. **Design inspiration** — does it have novel concepts (e.g., shared scratchpad, checkpointing, conditional routing) that solve problems we face or will face? Document these as candidates for future versions with a clear "borrow the pattern, not the framework" stance.
+
+The output of any tech research should be a clear recommendation: compete / integrate / borrow / ignore — with reasoning.
+
 ### Verify Before Handoff
 - After fixing a bug or implementing a feature that affects API/server behavior, smoke-test the change yourself (e.g. `curl` requests to the local server, `docker exec` commands) before asking the user to verify on the UI.
 
