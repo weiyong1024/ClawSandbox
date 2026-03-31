@@ -51,6 +51,12 @@ func (s *Server) registerRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/v1/snapshots", s.handleCreateSnapshot)
 	mux.HandleFunc("DELETE /api/v1/snapshots/{id}", s.handleDeleteSnapshot)
 
+	// OAuth
+	mux.HandleFunc("POST /api/v1/oauth/codex/start", s.handleCodexOAuthStart)
+	mux.HandleFunc("POST /api/v1/oauth/codex/callback", s.handleCodexOAuthCallback)
+	mux.HandleFunc("OPTIONS /api/v1/oauth/codex/callback", s.handleCodexOAuthCallback)
+	mux.HandleFunc("GET /api/v1/oauth/codex/poll", s.handleCodexOAuthPoll)
+
 	// WebSocket endpoints
 	mux.HandleFunc("GET /api/v1/ws/stats", s.handleWSStats)
 	mux.HandleFunc("GET /api/v1/ws/logs/{name}", s.handleWSLogs)

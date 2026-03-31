@@ -40,6 +40,8 @@ export const api = {
   updateModelAsset: (id, data)   => request('PUT',    `/assets/models/${encodeURIComponent(id)}`, data),
   deleteModelAsset: (id)         => request('DELETE', `/assets/models/${encodeURIComponent(id)}`),
   testModelAsset:   (data)       => request('POST',   '/assets/models/test', data),
+  startCodexOAuth:  (model, name) => request('POST', '/oauth/codex/start', { model, name }),
+  pollCodexOAuth:   (state) => request('GET',  `/oauth/codex/poll?state=${encodeURIComponent(state)}`),
 
   // Channel assets
   listChannelAssets:  ()           => request('GET',    '/assets/channels'),

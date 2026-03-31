@@ -12,13 +12,18 @@ import (
 
 // ModelAsset represents a pre-configured LLM provider + API key + model combination.
 // Models are shared — multiple instances can use the same model config simultaneously.
+// For OAuth-based providers (e.g. openai-codex), APIKey holds the access token and
+// the OAuth* fields store refresh credentials.
 type ModelAsset struct {
-	ID        string `json:"id"`
-	Name      string `json:"name"`
-	Provider  string `json:"provider"`
-	APIKey    string `json:"api_key"`
-	Model     string `json:"model"`
-	Validated bool   `json:"validated"`
+	ID             string `json:"id"`
+	Name           string `json:"name"`
+	Provider       string `json:"provider"`
+	APIKey         string `json:"api_key"`
+	Model          string `json:"model"`
+	Validated      bool   `json:"validated"`
+	OAuthRefresh   string `json:"oauth_refresh,omitempty"`
+	OAuthExpires   int64  `json:"oauth_expires,omitempty"`
+	OAuthAccountID string `json:"oauth_account_id,omitempty"`
 }
 
 // ChannelAsset represents a pre-configured messaging channel + token combination.

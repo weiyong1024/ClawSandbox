@@ -13,7 +13,7 @@ import (
 // ConfigureParams holds OpenClaw configuration parameters.
 type ConfigureParams struct {
 	ContainerID     string
-	Provider        string // e.g. "anthropic", "openai"
+	Provider        string // e.g. "anthropic", "openai", "openai-codex"
 	APIKey          string
 	Model           string      // e.g. "claude-sonnet-4-6"
 	Channel         string      // e.g. "telegram", "lark"
@@ -23,6 +23,10 @@ type ConfigureParams struct {
 	AppSecret       string      // Lark/Feishu App Secret
 	BotName         string      // bot display name for text @mention detection
 	Soul            *SoulParams // optional character to inject before gateway starts
+	// OAuth fields (openai-codex)
+	OAuthRefresh   string // Codex refresh token
+	OAuthExpires   int64  // Codex token expiry (ms)
+	OAuthAccountID string // Codex ChatGPT account ID
 }
 
 type configSetStep struct {
@@ -97,16 +101,33 @@ func Configure(cli *docker.Client, p ConfigureParams) error {
 		"supervisorctl", "stop", "openclaw", "gateway-bridge",
 	})
 
-	// Onboard with API key (runs as "node" — writes to ~node/.openclaw/)
-	apiKeyFlag := fmt.Sprintf("--%s-api-key", p.Provider)
-	if err := dockerExecAs(cli, p.ContainerID, "node", []string{
-		"openclaw", "onboard",
-		"--non-interactive", "--accept-risk", "--flow", "quickstart",
-		apiKeyFlag, p.APIKey,
-		"--skip-channels", "--skip-skills", "--skip-daemon", "--skip-ui",
-		"--skip-health",
-	}); err != nil {
-		return fmt.Errorf("onboard: %w", err)
+	// Onboard: create workspace and set up auth credentials.
+	// Codex OAuth uses --auth-choice skip + direct auth-profiles.json injection,
+	// since the interactive OAuth flow runs on the Dashboard host, not inside the container.
+	if p.Provider == "openai-codex" {
+		if err := dockerExecAs(cli, p.ContainerID, "node", []string{
+			"openclaw", "onboard",
+			"--non-interactive", "--accept-risk", "--flow", "quickstart",
+			"--auth-choice", "skip",
+			"--skip-channels", "--skip-skills", "--skip-daemon", "--skip-ui",
+			"--skip-health",
+		}); err != nil {
+			return fmt.Errorf("onboard: %w", err)
+		}
+		if err := injectCodexAuthProfile(cli, p.ContainerID, p.APIKey, p.OAuthRefresh, p.OAuthExpires, p.OAuthAccountID); err != nil {
+			return fmt.Errorf("inject codex auth: %w", err)
+		}
+	} else {
+		apiKeyFlag := fmt.Sprintf("--%s-api-key", p.Provider)
+		if err := dockerExecAs(cli, p.ContainerID, "node", []string{
+			"openclaw", "onboard",
+			"--non-interactive", "--accept-risk", "--flow", "quickstart",
+			apiKeyFlag, p.APIKey,
+			"--skip-channels", "--skip-skills", "--skip-daemon", "--skip-ui",
+			"--skip-health",
+		}); err != nil {
+			return fmt.Errorf("onboard: %w", err)
+		}
 	}
 
 	// Inject SOUL.md immediately after onboard (which creates the workspace).
@@ -382,19 +403,25 @@ func ConfigStatus(cli *docker.Client, containerID string) (*ConfigInfo, error) {
 	}
 
 	// Read API key hint from auth-profiles.json.
+	// Supports both api_key profiles (key field) and OAuth profiles (access field).
 	authOut, err := dockerExecOutputAs(cli, containerID, "node", []string{
 		"cat", "/home/node/.openclaw/agents/main/agent/auth-profiles.json",
 	})
 	if err == nil {
 		var authCfg struct {
 			Profiles map[string]struct {
-				Key string `json:"key"`
+				Key    string `json:"key"`
+				Access string `json:"access"`
 			} `json:"profiles"`
 		}
 		if json.Unmarshal([]byte(authOut), &authCfg) == nil {
 			for _, p := range authCfg.Profiles {
 				if p.Key != "" {
 					info.APIKeyHint = maskLast4(p.Key)
+					break
+				}
+				if p.Access != "" {
+					info.APIKeyHint = "OAuth ✓"
 					break
 				}
 			}
@@ -563,6 +590,65 @@ func dockerExecOutputAs(cli *docker.Client, containerID, user string, cmd []stri
 	}
 
 	return stdout.String(), nil
+}
+
+// injectCodexAuthProfile writes the Codex OAuth credentials into the container's
+// auth-profiles.json. It reads the existing file (to preserve other providers),
+// adds/updates the openai-codex:default profile, and writes it back.
+func injectCodexAuthProfile(cli *docker.Client, containerID, accessToken, refreshToken string, expires int64, accountID string) error {
+	const authDir = "/home/node/.openclaw/agents/main/agent"
+	const authPath = authDir + "/auth-profiles.json"
+
+	// Ensure the directory exists — onboard --auth-choice skip may not create it.
+	if err := dockerExecAs(cli, containerID, "node", []string{"mkdir", "-p", authDir}); err != nil {
+		return fmt.Errorf("mkdir auth dir: %w", err)
+	}
+
+	// Read existing auth profiles (may not exist yet on first configure).
+	existing, _ := dockerExecOutputAs(cli, containerID, "node", []string{"cat", authPath})
+
+	var store map[string]any
+	if existing != "" {
+		if err := json.Unmarshal([]byte(existing), &store); err != nil {
+			store = nil
+		}
+	}
+	if store == nil {
+		store = map[string]any{"version": float64(1), "profiles": map[string]any{}}
+	}
+
+	profiles, ok := store["profiles"].(map[string]any)
+	if !ok {
+		profiles = map[string]any{}
+		store["profiles"] = profiles
+	}
+
+	profiles["openai-codex:default"] = map[string]any{
+		"type":      "oauth",
+		"provider":  "openai-codex",
+		"access":    accessToken,
+		"refresh":   refreshToken,
+		"expires":   expires,
+		"accountId": accountID,
+	}
+
+	// Update lastGood so OpenClaw uses this profile by default.
+	lastGood, ok := store["lastGood"].(map[string]any)
+	if !ok {
+		lastGood = map[string]any{}
+		store["lastGood"] = lastGood
+	}
+	lastGood["openai-codex"] = "openai-codex:default"
+
+	data, err := json.MarshalIndent(store, "", "  ")
+	if err != nil {
+		return fmt.Errorf("marshal auth profiles: %w", err)
+	}
+
+	// Write the file via docker exec.
+	return dockerExecAs(cli, containerID, "node", []string{
+		"bash", "-c", fmt.Sprintf("cat > %s << 'CLAWFLEET_EOF'\n%s\nCLAWFLEET_EOF", authPath, string(data)),
+	})
 }
 
 // waitForGateway polls the gateway health endpoint until it responds or timeout.

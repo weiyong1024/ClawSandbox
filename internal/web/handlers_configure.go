@@ -27,6 +27,11 @@ type configureRequest struct {
 	ChannelAppToken string `json:"channel_app_token"`
 	AppID           string `json:"app_id"`
 	AppSecret       string `json:"app_secret"`
+
+	// OAuth fields (populated from model asset for openai-codex)
+	OAuthRefresh   string `json:"-"`
+	OAuthExpires   int64  `json:"-"`
+	OAuthAccountID string `json:"-"`
 }
 
 // handleConfigureInstance configures an OpenClaw instance via docker exec.
@@ -61,6 +66,9 @@ func (s *Server) handleConfigureInstance(w http.ResponseWriter, r *http.Request)
 		req.Provider = model.Provider
 		req.APIKey = model.APIKey
 		req.Model = model.Model
+		req.OAuthRefresh = model.OAuthRefresh
+		req.OAuthExpires = model.OAuthExpires
+		req.OAuthAccountID = model.OAuthAccountID
 
 		// Handle channel asset
 		if req.ChannelAssetID != "" {
@@ -162,6 +170,9 @@ func (s *Server) handleConfigureInstance(w http.ResponseWriter, r *http.Request)
 		AppSecret:       req.AppSecret,
 		BotName:         botName,
 		Soul:            soul,
+		OAuthRefresh:    req.OAuthRefresh,
+		OAuthExpires:    req.OAuthExpires,
+		OAuthAccountID:  req.OAuthAccountID,
 	}); err != nil {
 		writeError(w, http.StatusInternalServerError, fmt.Sprintf("configure failed: %v", err))
 		return

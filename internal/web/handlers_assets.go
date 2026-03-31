@@ -28,7 +28,12 @@ func (s *Server) handleListModelAssets(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"data": store.ListModels()})
+	models := store.ListModels()
+	// Strip OAuth secrets from the response — the frontend only needs the account ID hint.
+	for i := range models {
+		models[i].OAuthRefresh = ""
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"data": models})
 }
 
 type createModelRequest struct {
@@ -433,6 +438,8 @@ func providerDisplayName(provider string) string {
 		return "Anthropic"
 	case "openai":
 		return "OpenAI"
+	case "openai-codex":
+		return "ChatGPT (Codex)"
 	case "google":
 		return "Google"
 	case "deepseek":

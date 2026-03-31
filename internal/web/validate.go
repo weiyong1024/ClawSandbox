@@ -36,6 +36,8 @@ func ValidateModelKey(provider, apiKey, model string) error {
 		return validateDeepSeek(apiKey)
 	case "google":
 		return validateGoogle(apiKey)
+	case "openai-codex":
+		return nil // Validated via OAuth flow completion, not API key check.
 	default:
 		return fmt.Errorf("unsupported provider: %s", provider)
 	}

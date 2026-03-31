@@ -21,20 +21,24 @@ import (
 
 // Server is the ClawFleet Web UI HTTP server.
 type Server struct {
-	docker   *docker.Client
-	config   *config.Config
-	events   *EventBus
-	addr     string
+	docker     *docker.Client
+	config     *config.Config
+	events     *EventBus
+	addr       string
+	codexFlows *codexFlowManager
 }
 
 // NewServer creates a new Server.
 func NewServer(cli *docker.Client, cfg *config.Config, addr string) *Server {
-	return &Server{
-		docker: cli,
-		config: cfg,
-		events: NewEventBus(),
-		addr:   addr,
+	s := &Server{
+		docker:     cli,
+		config:     cfg,
+		events:     NewEventBus(),
+		addr:       addr,
+		codexFlows: newCodexFlowManager(),
 	}
+	s.codexFlows.startCallbackRelay()
+	return s
 }
 
 // loadStore loads the state from disk. Called per-request to stay in sync with CLI.
