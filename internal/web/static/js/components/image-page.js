@@ -95,11 +95,12 @@ export function ImagePage({ addToast }) {
     }
   };
 
-  const handlePull = async () => {
+  // "恢复默认版本" — pulls the pre-built release image
+  const handleResetDefault = async () => {
     setPulling(true);
     setPullLogs([]);
     try {
-      await readSSE('/api/v1/image/pull', setPullLogs, 'image.pullSuccess', 'image.pullFailed');
+      await readSSE('/api/v1/image/pull', setPullLogs, 'image.resetSuccess', 'image.resetFailed');
     } catch (err) {
       addToast(err.message, 'error');
     } finally {
@@ -108,11 +109,12 @@ export function ImagePage({ addToast }) {
     }
   };
 
-  const handleBuild = async () => {
+  // "装载此版本" — builds image with the selected OpenClaw version
+  const handleLoadVersion = async () => {
     setBuilding(true);
     setBuildLogs([]);
     try {
-      await readSSE('/api/v1/image/build', setBuildLogs, 'image.buildSuccess', 'image.buildFailed', {
+      await readSSE('/api/v1/image/build', setBuildLogs, 'image.loadSuccess', 'image.loadFailed', {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ openclaw_version: selectedVersion }),
       });
@@ -123,6 +125,9 @@ export function ImagePage({ addToast }) {
       checkStatus();
     }
   };
+
+  const busy = building || pulling;
+  const isRecommended = selectedVersion === versions?.recommended;
 
   if (loading) {
     return html`<div class="page-content"><div class="dashboard-loading"><p>${t('dashboard.loading')}</p></div></div>`;
@@ -165,31 +170,39 @@ export function ImagePage({ addToast }) {
 
       <div class="image-section">
         <h3 class="section-title">${t('image.openclawVersion')}</h3>
-        ${versionsLoading
-          ? html`<p class="image-version-hint">${t('image.versionLoading')}</p>`
-          : html`
-            <select class="form-input image-version-select"
-              value=${selectedVersion}
-              onChange=${(e) => setSelectedVersion(e.target.value)}
-              disabled=${building || pulling}
-            >
-              ${versions?.recommended && html`
-                <option value=${versions.recommended}>
-                  ${versions.recommended} ★ ${t('image.versionRecommended')}
-                </option>
-              `}
-              ${versions?.latest && versions.latest !== versions.recommended && html`
-                <option value=${versions.latest}>
-                  ${versions.latest} (${t('image.versionLatest')})
-                </option>
-              `}
-              ${(versions?.versions || [])
-                .filter(v => v !== versions?.recommended && v !== versions?.latest)
-                .map(v => html`<option key=${v} value=${v}>${v}</option>`)
-              }
-            </select>
-          `
-        }
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+          ${versionsLoading
+            ? html`<p class="image-version-hint">${t('image.versionLoading')}</p>`
+            : html`
+              <select class="form-input image-version-select"
+                value=${selectedVersion}
+                onChange=${(e) => setSelectedVersion(e.target.value)}
+                disabled=${busy}
+              >
+                ${versions?.recommended && html`
+                  <option value=${versions.recommended}>
+                    ${versions.recommended} ★ ${t('image.versionRecommended')}
+                  </option>
+                `}
+                ${versions?.latest && versions.latest !== versions.recommended && html`
+                  <option value=${versions.latest}>
+                    ${versions.latest} (${t('image.versionLatest')})
+                  </option>
+                `}
+                ${(versions?.versions || [])
+                  .filter(v => v !== versions?.recommended && v !== versions?.latest)
+                  .map(v => html`<option key=${v} value=${v}>${v}</option>`)
+                }
+              </select>
+              <button class="btn btn-primary" onClick=${handleLoadVersion} disabled=${busy}>
+                ${building ? t('image.loading') : t('image.loadVersion')}
+              </button>
+            `
+          }
+        </div>
+        <p style="margin:8px 0 0;color:var(--text-secondary);font-size:0.85rem">
+          ${t('image.loadHint')}
+        </p>
       </div>
 
       <div class="image-section">
@@ -203,18 +216,15 @@ export function ImagePage({ addToast }) {
       </div>
 
       <div class="image-actions">
-        <button class="btn btn-primary" onClick=${handlePull} disabled=${pulling || building}>
-          ${pulling ? t('image.pulling') : t('image.pull')}
+        <button class="btn btn-ghost" onClick=${handleResetDefault} disabled=${busy}>
+          ${pulling ? t('image.resetting') : t('image.resetDefault')}
         </button>
-        <button class="btn btn-secondary" onClick=${handleBuild} disabled=${building || pulling}>
-          ${building ? t('image.building') : t('image.build')}
-        </button>
-        <span class="image-action-hint">${t('image.pullHint')}</span>
+        <span class="image-action-hint">${t('image.resetHint')}</span>
       </div>
 
       ${pullLogs.length > 0 && html`
         <div class="image-section">
-          <h3 class="section-title">${t('image.pullLog')}</h3>
+          <h3 class="section-title">${t('image.resetLog')}</h3>
           <div class="image-build-log">
             ${pullLogs.map((line, i) => html`<div key=${i} class="logs-line">${line}</div>`)}
           </div>
@@ -223,7 +233,7 @@ export function ImagePage({ addToast }) {
 
       ${buildLogs.length > 0 && html`
         <div class="image-section">
-          <h3 class="section-title">${t('image.buildLog')}</h3>
+          <h3 class="section-title">${t('image.loadLog')}</h3>
           <div class="image-build-log">
             ${buildLogs.map((line, i) => html`<div key=${i} class="logs-line">${line}</div>`)}
           </div>
