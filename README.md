@@ -9,55 +9,46 @@
 
 🌐 **Website:** [clawfleet.io](https://clawfleet.io) · 💬 **Community:** [Discord](https://discord.gg/b5ZSRyrqbt) · 📝 **Blog:** [Dev.to](https://dev.to/weiyong1024/i-built-an-open-source-tool-to-run-ai-agents-on-my-laptop-they-collaborate-in-discord-managed-1c42)
 
-> Deploy and manage a fleet of isolated [OpenClaw](https://github.com/openclaw/openclaw) instances on a single machine — from a browser dashboard, no CLI needed.
+> Deploy and manage a fleet of isolated [OpenClaw](https://github.com/openclaw/openclaw) instances on a single machine — each sandboxed in Docker, managed from a browser dashboard.
 
 [中文文档](./README.zh-CN.md)
 
----
-
-**You don't need a dedicated server.** If you have a Mac with Apple Silicon, ClawFleet lets you:
-
-- **Deploy OpenClaw in minutes** — fully sandboxed in Docker, completely isolated from everything else on your machine
-- **Run as many as you want** — spin up an entire fleet of OpenClaw instances and experience a one-person company powered by AI
-
-No cloud bills. No new hardware. Everything runs on the machine you already have.
-
----
-
-## Background
-
-LLM AI applications are evolving through three stages:
-
-1. **ChatBot** — helps everyone access knowledge
-2. **Agent** — makes everyone a professional
-3. **OpenClaw** — makes everyone a manager
-
-OpenClaw is a self-hosted personal AI assistant that connects to 20+ messaging platforms including WhatsApp, Telegram, and Slack. ClawFleet removes the deployment bottleneck — instead of struggling to run a single instance, you can spin up an entire fleet with one command.
-
-## What ClawFleet Does
-
-- **One-command fleet deployment** — give it a number, get that many isolated OpenClaw instances
-- **Web Dashboard** — manage your entire fleet from a browser with real-time stats, one-click actions, and embedded noVNC desktops
-- **Character system** — define reusable personas (bio, backstory, style, traits) and assign them to instances. Each bot gets a persistent soul that survives across channels and sessions
-- **Skill management** — browse 52 built-in skills, search and install from 13,000+ community skills on ClawHub. Different instances can have different skill sets
-- **Full desktop per instance** — each claw runs in its own Docker container with an XFCE desktop, accessible via noVNC
-- **Lifecycle management** — create, start, stop, restart, and destroy instances via CLI or Dashboard
-- **Soul Archive** — save a configured instance's soul and clone it to new instances instantly
-- **Auto-recovery** — configured instances automatically restart their gateway after container restarts
-- **Data persistence** — each instance's data survives container restarts
-- **Resource isolation** — instances are isolated from your host system and from each other
-
-## Requirements
-
-- macOS or Linux
-
-## Quick Start
+## Get Started
 
 ```bash
 curl -fsSL https://clawfleet.io/install.sh | sh
 ```
 
-This single command will:
+10 minutes: Docker installed, image pulled, dashboard running at `http://localhost:8080`. Log in with your ChatGPT account — your existing Plus subscription covers inference, no API keys needed.
+
+---
+
+**Imagine buying N dedicated Mac Minis**, each running its own OpenClaw instance, fully isolated, collaborating in Discord. Your own AI company — data stays on your hardware, no SaaS subscription.
+
+**ClawFleet makes that free.** Each instance runs in its own Docker container with isolated filesystem and networking. On your existing Mac or Linux box. ~1.5 GB RAM per instance.
+
+---
+
+## What ClawFleet Does
+
+- **Sandboxed instances** — each OpenClaw runs in its own Docker container, isolated from your host and from each other. No rogue skill can read your files
+- **Browser dashboard** — create, configure, monitor, and destroy instances without touching a terminal
+- **ChatGPT login** — authenticate with your existing ChatGPT account, or use API keys from OpenAI, Anthropic, Google, DeepSeek
+- **Version pinning** — lock a tested OpenClaw version so upstream breaking changes don't touch you
+- **Fleet management** — spin up as many instances as your RAM allows, each with different models, personas, and channels
+- **Character system** — define reusable personas (bio, backstory, style, traits) and assign them to instances
+- **Skill management** — browse 52 built-in skills, search and install from 13,000+ community skills on ClawHub
+- **Full desktop per instance** — each claw has an XFCE desktop accessible via noVNC in your browser
+- **Soul Archive** — save a configured instance's soul and clone it instantly
+- **Auto-recovery** — instances automatically restart their gateway after container restarts
+
+## Requirements
+
+- macOS or Linux
+
+## Install Details
+
+The install command above will:
 1. Install Docker if needed (Colima on macOS, Docker Engine on Linux)
 2. Download and install the `clawfleet` CLI
 3. Pull the pre-built sandbox image (~1.4 GB)

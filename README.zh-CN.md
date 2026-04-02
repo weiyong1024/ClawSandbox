@@ -9,55 +9,46 @@
 
 🌐 **官网:** [clawfleet.io](https://clawfleet.io) · 💬 **社区:** [Discord](https://discord.gg/b5ZSRyrqbt) · 📝 **博客:** [Dev.to](https://dev.to/weiyong1024/i-built-an-open-source-tool-to-run-ai-agents-on-my-laptop-they-collaborate-in-discord-managed-1c42)
 
-> 在单台机器上部署和管理多个隔离的 [OpenClaw](https://github.com/openclaw/openclaw) 实例 — 打开浏览器即可管理，无需命令行。
+> 在单台机器上部署和管理多个隔离的 [OpenClaw](https://github.com/openclaw/openclaw) 实例 — 每个实例运行在独立 Docker 沙箱中，通过浏览器管理。
 
 [English](./README.md)
 
----
-
-**不需要额外买一台 Mac Mini。** 只要你有一台 Apple Silicon 的 Mac，ClawFleet 就能让你：
-
-- **几分钟部署 OpenClaw** — 完全运行在 Docker 沙箱中，与电脑上的现有资源彻底隔离
-- **想部署多少就部署多少** — 一键拉起 OpenClaw 军团，体验 AI 驱动的一人公司
-
-不用买云服务器，不用添置新硬件，一切在你的工作机上完成。
-
----
-
-## 背景
-
-LLM AI 的应用层发展分三个阶段：
-
-1. **ChatBot** — 让人人获取知识
-2. **Agent** — 让人人成为专业的人
-3. **OpenClaw** — 让人人成为管理者
-
-OpenClaw 是一个自托管的个人 AI 助手，能连接 WhatsApp、Telegram、Slack 等 20+ 消息平台。ClawFleet 的目标是消除部署瓶颈——不应该让 OpenClaw 单体的获取成为卡点，而应该能轻松部署一个 OpenClaw 军团。
-
-## ClawFleet 能做什么
-
-- **一条命令部署军团** — 给一个数字，就能得到对应数量的隔离 OpenClaw 实例
-- **Web 仪表盘** — 在浏览器中管理整个军团，实时资源监控、一键操作、内嵌 noVNC 桌面
-- **人设系统** — 定义可复用的角色人设（简介、背景、风格、特征），赋予每个实例持久的灵魂，跨通道、跨会话保持一致
-- **技能管理** — 浏览 52 个内置技能，从 ClawHub 13,000+ 社区技能中搜索安装。不同实例可有不同技能组合
-- **每个实例独立桌面** — 每只龙虾运行在独立的 Docker 容器中，内含 XFCE 桌面，通过 noVNC 在任意浏览器中访问
-- **生命周期管理** — 通过 CLI 或仪表盘创建、启动、停止、重启、销毁实例
-- **灵魂存档** — 保存已配置实例的灵魂，随时克隆到新实例
-- **自动恢复** — 已配置实例在容器重启后自动恢复 gateway 运行
-- **数据持久化** — 每个实例的数据在容器重启后保留
-- **资源隔离** — 实例之间以及与宿主系统之间完全隔离
-
-## 前置要求
-
-- macOS 或 Linux
-
-## 快速开始
+## 开始使用
 
 ```bash
 curl -fsSL https://clawfleet.io/install.sh | sh
 ```
 
-一条命令完成全部操作：
+10 分钟：Docker 自动安装、镜像拉取完毕、Dashboard 在 `http://localhost:8080` 运行。用 ChatGPT 账号登录——已有的 Plus 订阅即可驱动推理，无需 API Key。
+
+---
+
+**想象你买了 N 台专用 Mac Mini**，每台跑一个 OpenClaw 实例，互相隔离，在 Discord 群里自动协作。一家属于你的 AI 公司——数据在你手里，不付订阅费。
+
+**ClawFleet 让这件事免费。** 每个实例跑在独立的 Docker 容器中，隔离的文件系统和网络。在你现有的 Mac 或 Linux 上运行。每个实例约 1.5 GB 内存。
+
+---
+
+## ClawFleet 能做什么
+
+- **沙箱隔离** — 每个 OpenClaw 跑在独立 Docker 容器中，与宿主机和其他实例完全隔离。恶意技能无法读取你的文件
+- **浏览器管理** — 创建、配置、监控、销毁实例，全程无需触碰终端
+- **ChatGPT 登录** — 用已有的 ChatGPT 账号认证，或使用 OpenAI、Anthropic、Google、DeepSeek 的 API Key
+- **版本锁定** — 锁定已测试的 OpenClaw 版本，上游 breaking changes 与你无关
+- **军团管理** — 按内存允许的数量创建实例，每个可配置不同模型、人设和频道
+- **人设系统** — 定义可复用的角色人设（简介、背景、风格、特征），赋予每个实例
+- **技能管理** — 浏览 52 个内置技能，从 ClawHub 13,000+ 社区技能中搜索安装
+- **独立桌面** — 每个实例内含 XFCE 桌面，通过 noVNC 在浏览器中访问
+- **灵魂存档** — 保存已配置实例的灵魂，随时克隆到新实例
+- **自动恢复** — 实例在容器重启后自动恢复运行
+
+## 前置要求
+
+- macOS 或 Linux
+
+## 安装详情
+
+上面的安装命令会自动完成：
 1. 自动安装 Docker（macOS 用 Colima，Linux 用 Docker Engine）
 2. 下载并安装 `clawfleet` 命令行工具
 3. 拉取预构建沙箱镜像（约 1.4 GB）
