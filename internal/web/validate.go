@@ -76,7 +76,7 @@ func validateGoogle(apiKey string) error {
 	if err != nil {
 		return err
 	}
-	return doValidationRequest(req, "Google")
+	return doValidationRequest(req, "Google AI Studio")
 }
 
 func doValidationRequest(req *http.Request, provider string) error {

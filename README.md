@@ -33,7 +33,7 @@ curl -fsSL https://clawfleet.io/install.sh | sh
 
 - **Sandboxed instances** — each OpenClaw runs in its own Docker container, isolated from your host and from each other. No rogue skill can read your files
 - **Browser dashboard** — create, configure, monitor, and destroy instances without touching a terminal
-- **ChatGPT login** — authenticate with your existing ChatGPT account, or use API keys from OpenAI, Anthropic, Google, DeepSeek
+- **ChatGPT login** — authenticate with your existing ChatGPT account, or use API keys from OpenAI, Anthropic, Google AI Studio, DeepSeek
 - **Version pinning** — lock a tested OpenClaw version so upstream breaking changes don't touch you
 - **Fleet management** — spin up as many instances as your RAM allows, each with different models, personas, and channels
 - **Character system** — define reusable personas (bio, backstory, style, traits) and assign them to instances
@@ -145,7 +145,7 @@ Connect your fleet to messaging platforms and watch your AI employees work toget
 See the **[Wiki](https://github.com/clawfleet/ClawFleet/wiki)** for full documentation, including:
 - [Getting Started](https://github.com/clawfleet/ClawFleet/wiki/Getting-Started) — prerequisites, install, first instance
 - [Dashboard Guide](https://github.com/clawfleet/ClawFleet/wiki/Dashboard-Guide) — sidebar navigation, asset management, fleet management
-- LLM Provider guides — [Anthropic](https://github.com/clawfleet/ClawFleet/wiki/Provider-Anthropic) | [OpenAI](https://github.com/clawfleet/ClawFleet/wiki/Provider-OpenAI) | [Google](https://github.com/clawfleet/ClawFleet/wiki/Provider-Google) | [DeepSeek](https://github.com/clawfleet/ClawFleet/wiki/Provider-DeepSeek)
+- LLM Provider guides — [Anthropic](https://github.com/clawfleet/ClawFleet/wiki/Provider-Anthropic) | [OpenAI](https://github.com/clawfleet/ClawFleet/wiki/Provider-OpenAI) | [Google AI Studio](https://github.com/clawfleet/ClawFleet/wiki/Provider-Google) | [DeepSeek](https://github.com/clawfleet/ClawFleet/wiki/Provider-DeepSeek)
 - Channel guides — [Telegram](https://github.com/clawfleet/ClawFleet/wiki/Channel-Telegram) | [Discord](https://github.com/clawfleet/ClawFleet/wiki/Channel-Discord) | [Slack](https://github.com/clawfleet/ClawFleet/wiki/Channel-Slack) | [Lark](https://github.com/clawfleet/ClawFleet/wiki/Channel-Lark)
 - [CLI Reference](https://github.com/clawfleet/ClawFleet/wiki/CLI-Reference) | [FAQ](https://github.com/clawfleet/ClawFleet/wiki/FAQ)
 

@@ -33,7 +33,7 @@ curl -fsSL https://clawfleet.io/install.sh | sh
 
 - **沙箱隔离** — 每个 OpenClaw 跑在独立 Docker 容器中，与宿主机和其他实例完全隔离。恶意技能无法读取你的文件
 - **浏览器管理** — 创建、配置、监控、销毁实例，全程无需触碰终端
-- **ChatGPT 登录** — 用已有的 ChatGPT 账号认证，或使用 OpenAI、Anthropic、Google、DeepSeek 的 API Key
+- **ChatGPT 登录** — 用已有的 ChatGPT 账号认证，或使用 OpenAI、Anthropic、Google AI Studio、DeepSeek 的 API Key
 - **版本锁定** — 锁定已测试的 OpenClaw 版本，上游 breaking changes 与你无关
 - **军团管理** — 按内存允许的数量创建实例，每个可配置不同模型、人设和频道
 - **人设系统** — 定义可复用的角色人设（简介、背景、风格、特征），赋予每个实例
@@ -145,7 +145,7 @@ ssh -fNL 8081:127.0.0.1:8080 user@your-server
 完整文档请参阅 **[Wiki](https://github.com/clawfleet/ClawFleet/wiki)**，包括：
 - [快速开始](https://github.com/clawfleet/ClawFleet/wiki/Getting-Started) — 前置要求、安装、第一个实例
 - [仪表盘指南](https://github.com/clawfleet/ClawFleet/wiki/Dashboard-Guide) — 侧边栏导航、资产管理、实例管理
-- LLM 提供商指南 — [Anthropic](https://github.com/clawfleet/ClawFleet/wiki/Provider-Anthropic) | [OpenAI](https://github.com/clawfleet/ClawFleet/wiki/Provider-OpenAI) | [Google](https://github.com/clawfleet/ClawFleet/wiki/Provider-Google) | [DeepSeek](https://github.com/clawfleet/ClawFleet/wiki/Provider-DeepSeek)
+- LLM 提供商指南 — [Anthropic](https://github.com/clawfleet/ClawFleet/wiki/Provider-Anthropic) | [OpenAI](https://github.com/clawfleet/ClawFleet/wiki/Provider-OpenAI) | [Google AI Studio](https://github.com/clawfleet/ClawFleet/wiki/Provider-Google) | [DeepSeek](https://github.com/clawfleet/ClawFleet/wiki/Provider-DeepSeek)
 - 频道指南 — [Telegram](https://github.com/clawfleet/ClawFleet/wiki/Channel-Telegram) | [Discord](https://github.com/clawfleet/ClawFleet/wiki/Channel-Discord) | [Slack](https://github.com/clawfleet/ClawFleet/wiki/Channel-Slack) | [Lark](https://github.com/clawfleet/ClawFleet/wiki/Channel-Lark)
 - [CLI 参考](https://github.com/clawfleet/ClawFleet/wiki/CLI-Reference) | [常见问题](https://github.com/clawfleet/ClawFleet/wiki/FAQ)
 

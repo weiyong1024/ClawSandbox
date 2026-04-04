@@ -441,7 +441,7 @@ func providerDisplayName(provider string) string {
 	case "openai-codex":
 		return "ChatGPT (Codex)"
 	case "google":
-		return "Google"
+		return "Google AI Studio"
 	case "deepseek":
 		return "DeepSeek"
 	default:

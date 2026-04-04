@@ -118,7 +118,13 @@ func Configure(cli *docker.Client, p ConfigureParams) error {
 			return fmt.Errorf("inject codex auth: %w", err)
 		}
 	} else {
-		apiKeyFlag := fmt.Sprintf("--%s-api-key", p.Provider)
+		// Map ClawFleet provider names to OpenClaw onboard flag names.
+		// OpenClaw uses "gemini" not "google" for the API key flag.
+		flagProvider := p.Provider
+		if flagProvider == "google" {
+			flagProvider = "gemini"
+		}
+		apiKeyFlag := fmt.Sprintf("--%s-api-key", flagProvider)
 		if err := dockerExecAs(cli, p.ContainerID, "node", []string{
 			"openclaw", "onboard",
 			"--non-interactive", "--accept-risk", "--flow", "quickstart",

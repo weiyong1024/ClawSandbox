@@ -41,7 +41,7 @@ export function ModelAssetDialog({ model, onClose, onSave, addToast }) {
     anthropic: 'e.g. Claude Opus 4.6',
     openai: 'e.g. GPT-5.4 Production',
     'openai-codex': 'e.g. ChatGPT GPT-5.4',
-    google: 'e.g. Gemini 3.1 Pro',
+    google: 'e.g. Google AI Studio Gemini',
     deepseek: 'e.g. DeepSeek Chat',
   };
 
@@ -181,7 +181,7 @@ export function ModelAssetDialog({ model, onClose, onSave, addToast }) {
                 <option value="openai-codex">ChatGPT (Codex) ★ ${t('image.recommended')}</option>
                 <option value="openai">OpenAI</option>
                 <option value="anthropic">Anthropic</option>
-                <option value="google">Google</option>
+                <option value="google">Google AI Studio</option>
                 <option value="deepseek">DeepSeek</option>
               </select>
             </label>
