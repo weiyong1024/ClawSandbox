@@ -13,19 +13,22 @@
 
 [English](./README.md)
 
+**想象你买了 N 台专用 Mac Mini**，每台跑一个 OpenClaw 实例，互相隔离，在 Discord 群里自动协作。一家属于你的 AI 公司——数据在你手里，不付订阅费。
+
+**ClawFleet 让这件事免费。** 每个实例跑在独立的 Docker 容器中，隔离的文件系统和网络。在你现有的 Mac 或 Linux 上运行。每个实例约 500 MB 内存。
+
+![Dashboard](docs/images/fleet.png)
+
 ## 开始使用
 
 ```bash
 curl -fsSL https://clawfleet.io/install.sh | sh
 ```
 
-10 分钟：Docker 自动安装、镜像拉取完毕、Dashboard 在 `http://localhost:8080` 运行。用 ChatGPT 账号登录——已有的 Plus 订阅即可驱动推理，无需 API Key。
+5 分钟：Docker 自动安装、镜像拉取完毕、Dashboard 在 `http://localhost:8080` 运行。用 ChatGPT 账号登录——已有的 Plus 订阅即可驱动推理，无需 API Key。
 
----
-
-**想象你买了 N 台专用 Mac Mini**，每台跑一个 OpenClaw 实例，互相隔离，在 Discord 群里自动协作。一家属于你的 AI 公司——数据在你手里，不付订阅费。
-
-**ClawFleet 让这件事免费。** 每个实例跑在独立的 Docker 容器中，隔离的文件系统和网络。在你现有的 Mac 或 Linux 上运行。每个实例约 1.5 GB 内存。
+[![安装演示](https://img.youtube.com/vi/FSxC2vUQ-6k/maxresdefault.jpg)](https://youtu.be/FSxC2vUQ-6k)
+[![▶ 观看安装演示 (30秒)](https://img.shields.io/badge/▶_观看安装演示-30秒-red?style=for-the-badge&logo=youtube)](https://youtu.be/FSxC2vUQ-6k)
 
 ---
 

@@ -13,19 +13,22 @@
 
 [中文文档](./README.zh-CN.md)
 
+**Imagine buying N dedicated Mac Minis**, each running its own OpenClaw instance, fully isolated, collaborating in Discord. Your own AI company — data stays on your hardware, no SaaS subscription.
+
+**ClawFleet makes that free.** Each instance runs in its own Docker container with isolated filesystem and networking. On your existing Mac or Linux box. ~500 MB RAM per instance.
+
+![Dashboard](docs/images/fleet.png)
+
 ## Get Started
 
 ```bash
 curl -fsSL https://clawfleet.io/install.sh | sh
 ```
 
-10 minutes: Docker installed, image pulled, dashboard running at `http://localhost:8080`. Log in with your ChatGPT account — your existing Plus subscription covers inference, no API keys needed.
+5 minutes: Docker installed, image pulled, dashboard running at `http://localhost:8080`. Log in with your ChatGPT account — your existing Plus subscription covers inference, no API keys needed.
 
----
-
-**Imagine buying N dedicated Mac Minis**, each running its own OpenClaw instance, fully isolated, collaborating in Discord. Your own AI company — data stays on your hardware, no SaaS subscription.
-
-**ClawFleet makes that free.** Each instance runs in its own Docker container with isolated filesystem and networking. On your existing Mac or Linux box. ~1.5 GB RAM per instance.
+[![Install Demo](https://img.youtube.com/vi/FSxC2vUQ-6k/maxresdefault.jpg)](https://youtu.be/FSxC2vUQ-6k)
+[![▶ Watch Install Demo (30s)](https://img.shields.io/badge/▶_Watch_Install_Demo-30s-red?style=for-the-badge&logo=youtube)](https://youtu.be/FSxC2vUQ-6k)
 
 ---
 
