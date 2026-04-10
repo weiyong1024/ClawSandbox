@@ -196,15 +196,70 @@ curl -s -o /dev/null -w "%{http_code}" --max-time 3 \
 
 ---
 
-## Phase 7: Cleanup
+## Phase 7: Deep Tests
 
-### T17. Destroy test instance
+### T17. Console proxy trailing slash redirect
+```bash
+curl -sI http://localhost:$DASHBOARD_PORT/console/$INSTANCE
+```
+**Pass:** HTTP 301 with `Location: /console/$INSTANCE/`.
+
+### T18. Console proxy WebSocket bypass
+```bash
+curl -s -o /dev/null -w "%{http_code}" --max-time 3 \
+  -H "Upgrade: websocket" -H "Connection: Upgrade" \
+  -H "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==" -H "Sec-WebSocket-Version: 13" \
+  http://localhost:$DASHBOARD_PORT/console/$INSTANCE
+```
+**Pass:** HTTP 101 (not 301 — WebSocket must bypass the trailing slash redirect).
+
+### T19. Codex OAuth start endpoint
+```bash
+curl -sf -X POST http://localhost:$DASHBOARD_PORT/api/v1/oauth/codex/start \
+  -H 'Content-Type: application/json' \
+  -d '{"model":"gpt-5.4","name":"test"}'
+```
+**Pass:** Response contains `auth_url` with `auth.openai.com` and a `state` string.
+**Note:** Does not complete the full OAuth flow (requires browser). Only verifies the API endpoint works.
+
+### T20. Restart bot
+```bash
+curl -sf -X POST http://localhost:$DASHBOARD_PORT/api/v1/instances/$INSTANCE/restart-bot
+# Wait for gateway to recover
+sleep 5
+docker exec $INSTANCE curl -sf http://127.0.0.1:18789/health
+```
+**Pass:** Response contains `restarted: true`, gateway health OK after restart.
+
+### T21. Skills list
+```bash
+curl -sf http://localhost:$DASHBOARD_PORT/api/v1/instances/$INSTANCE/skills
+```
+**Pass:** Response is a non-empty list (50+ bundled skills expected).
+
+### T22. Version selector (OpenClaw versions)
+```bash
+curl -sf http://localhost:$DASHBOARD_PORT/api/v1/image/openclaw-versions
+```
+**Pass:** Response contains `recommended` matching `RecommendedOpenClawVersion`, `latest` field, and a `versions` array.
+
+### T23. Version API
+```bash
+curl -sf http://localhost:$DASHBOARD_PORT/api/v1/version
+```
+**Pass:** Response contains the ClawFleet binary version.
+
+---
+
+## Phase 8: Cleanup
+
+### T24. Destroy test instance
 ```bash
 curl -sf -X DELETE http://localhost:$DASHBOARD_PORT/api/v1/instances/$INSTANCE
 ```
 **Pass:** Instance destroyed.
 
-### T18. Verify cleanup
+### T25. Verify cleanup
 ```bash
 curl -sf http://localhost:$DASHBOARD_PORT/api/v1/instances
 ```
@@ -219,7 +274,7 @@ Print results:
 ═══════════════════════════════════════
   ClawFleet Smoke Test Results
 ═══════════════════════════════════════
-  Passed: XX / 18
+  Passed: XX / 25
   Failed: XX
   Skipped: XX
 ═══════════════════════════════════════
