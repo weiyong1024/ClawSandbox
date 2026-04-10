@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/clawfleet/clawfleet/internal/config"
+	versionpkg "github.com/clawfleet/clawfleet/internal/version"
 	"github.com/clawfleet/clawfleet/internal/container"
 	"github.com/clawfleet/clawfleet/internal/port"
 	"github.com/clawfleet/clawfleet/internal/snapshot"
@@ -560,4 +561,13 @@ func writeError(w http.ResponseWriter, status int, msg string) {
 	}); err != nil {
 		log.Printf("writeError: %v", err)
 	}
+}
+
+// handleVersion returns the ClawFleet version.
+func (s *Server) handleVersion(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, map[string]any{
+		"data": map[string]string{
+			"version": versionpkg.Version,
+		},
+	})
 }

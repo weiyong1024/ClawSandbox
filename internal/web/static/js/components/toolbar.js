@@ -1,5 +1,6 @@
 import { html, useState, useRef, useEffect } from '../lib.js';
 import { useLang } from '../i18n.js';
+import { api } from '../api.js';
 
 const LANGUAGES = [
   { code: 'en', label: 'English' },
@@ -9,7 +10,12 @@ const LANGUAGES = [
 export function Toolbar() {
   const { lang, setLang } = useLang();
   const [open, setOpen] = useState(false);
+  const [version, setVersion] = useState('');
   const ref = useRef(null);
+
+  useEffect(() => {
+    api.version().then(d => setVersion(d.version || '')).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -27,6 +33,7 @@ export function Toolbar() {
       <div class="toolbar-brand">
         <span class="toolbar-logo">🦞</span>
         <h1 class="toolbar-title">ClawFleet</h1>
+        ${version && html`<span class="toolbar-version">${version}</span>`}
       </div>
       <div class="toolbar-right">
         <div class="lang-dropdown" ref=${ref}>

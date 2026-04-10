@@ -4,7 +4,7 @@ MODULE     = github.com/clawfleet/clawfleet
 IMAGE      = ghcr.io/clawfleet/clawfleet:latest
 GO_BOOTSTRAP = ./scripts/ensure-go.sh --print-path
 
-VERSION    ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
+VERSION    ?= $(shell git describe --tags --always --dirty="-pre" 2>/dev/null || echo dev)
 GIT_COMMIT ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo unknown)
 BUILD_DATE ?= $(shell date -u '+%Y-%m-%dT%H:%M:%SZ')
 

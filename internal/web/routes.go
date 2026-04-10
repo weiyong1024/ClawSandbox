@@ -51,6 +51,9 @@ func (s *Server) registerRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/v1/snapshots", s.handleCreateSnapshot)
 	mux.HandleFunc("DELETE /api/v1/snapshots/{id}", s.handleDeleteSnapshot)
 
+	// Version
+	mux.HandleFunc("GET /api/v1/version", s.handleVersion)
+
 	// OAuth
 	mux.HandleFunc("POST /api/v1/oauth/codex/start", s.handleCodexOAuthStart)
 	mux.HandleFunc("POST /api/v1/oauth/codex/callback", s.handleCodexOAuthCallback)

@@ -60,6 +60,13 @@ body {
   letter-spacing: -0.02em;
 }
 
+.toolbar-version {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  opacity: 0.7;
+  font-weight: 400;
+}
+
 .toolbar-count {
   font-size: 0.8rem;
   color: var(--text-dim);

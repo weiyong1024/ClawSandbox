@@ -30,6 +30,9 @@ export const api = {
   configureInstance: (name, config) => request('POST', `/instances/${encodeURIComponent(name)}/configure`, config),
   getConfigStatus:   (name)        => request('GET',  `/instances/${encodeURIComponent(name)}/configure/status`),
 
+  // Version
+  version:          () => request('GET', '/version'),
+
   // Image
   imageStatus:      () => request('GET', '/image/status'),
   openclawVersions: () => request('GET', '/image/openclaw-versions'),
