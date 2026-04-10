@@ -193,7 +193,7 @@ To destroy all instances (including data), stop the Dashboard, and remove all bu
 make reset
 ```
 
-After resetting, start over from [Quick Start](#quick-start) step 1.
+After resetting, start over from [Get Started](#get-started) step 1.
 
 ## Resource Usage
 

@@ -1,15 +1,20 @@
 package web
 
 import (
+	"os"
 	"testing"
 
 	"github.com/clawfleet/clawfleet/internal/state"
 )
 
-// mockStoreForRoster creates a Store with the given instances for roster testing.
-// It uses a temp file so Save() doesn't fail.
+// mockStoreForRoster creates an isolated Store with only the given instances.
+// Uses a temp HOME dir so state.Load() returns an empty store.
 func mockStoreForRoster(t *testing.T, instances []*state.Instance) *state.Store {
 	t.Helper()
+	origHome := os.Getenv("HOME")
+	t.Cleanup(func() { os.Setenv("HOME", origHome) })
+	os.Setenv("HOME", t.TempDir())
+
 	store, err := state.Load()
 	if err != nil {
 		t.Fatalf("loading store: %v", err)
@@ -22,6 +27,10 @@ func mockStoreForRoster(t *testing.T, instances []*state.Instance) *state.Store 
 
 func mockAssetsForRoster(t *testing.T) *state.AssetStore {
 	t.Helper()
+	origHome := os.Getenv("HOME")
+	t.Cleanup(func() { os.Setenv("HOME", origHome) })
+	os.Setenv("HOME", t.TempDir())
+
 	assets, err := state.LoadAssets()
 	if err != nil {
 		t.Fatalf("loading assets: %v", err)
