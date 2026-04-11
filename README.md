@@ -48,6 +48,8 @@ curl -fsSL https://clawfleet.io/install.sh | sh
 ## Requirements
 
 - macOS or Linux
+- **Mac users:** strongly recommended to install [Docker Desktop](https://www.docker.com/products/docker-desktop/) first for the best experience
+  <br><sub>Otherwise ClawFleet will automatically install Colima as an alternative Docker runtime.</sub>
 
 ## Install Details
 

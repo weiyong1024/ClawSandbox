@@ -147,11 +147,16 @@ ensure_docker() {
 }
 
 install_docker_macos() {
-  # Use Colima (open source, no EULA popup) + Docker CLI via Homebrew
+  # Use Colima (open source, no EULA popup) + Docker CLI via Homebrew.
+  # Docker Desktop is recommended for best experience but not required.
+  warn "Docker not found. ClawFleet will install Colima (open-source Docker runtime)."
+  warn "For the best experience, install Docker Desktop first: https://docker.com/products/docker-desktop"
+  warn "Continuing with Colima — this may take a few minutes on first run..."
+  printf "\n"
 
   # 1. Ensure Homebrew
   if ! command -v brew >/dev/null 2>&1; then
-    step "Installing Homebrew..."
+    step "Installing Homebrew (prerequisite for Colima)..."
     NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
     # Set up PATH for newly installed Homebrew
@@ -170,9 +175,9 @@ install_docker_macos() {
   brew install colima docker 2>&1 | tail -1
   ok "Colima and Docker CLI installed"
 
-  # 3. Start Colima
-  step "Starting Docker runtime (Colima)..."
-  colima start --cpu 2 --memory 4 --disk 60 2>&1 | tail -1
+  # 3. Start Colima (first run downloads a ~300 MB VM image — be patient)
+  step "Starting Docker runtime (Colima) — first launch may take 3-5 minutes..."
+  colima start --cpu 2 --memory 4 --disk 60
 
   wait_for_docker
 }
@@ -240,11 +245,11 @@ start_docker_daemon() {
 
 wait_for_docker() {
   attempts=0
-  max_attempts=30
+  max_attempts=150
   while ! $DOCKER_CMD info >/dev/null 2>&1; do
     attempts=$((attempts + 1))
     if [ "$attempts" -ge "$max_attempts" ]; then
-      die "Docker did not start within 60 seconds. Please check your Docker installation."
+      die "Docker did not start within 5 minutes. Please check your Docker installation."
     fi
     printf "."
     sleep 2
