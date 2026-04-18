@@ -25,9 +25,7 @@
 curl -fsSL https://clawfleet.io/install.sh | sh
 ```
 
-5 minutes: Docker installed, image pulled, dashboard running at `http://localhost:8080`. Log in with your ChatGPT account — your existing Plus subscription covers inference, no API keys needed.
-
-> **Not affected by the 2026-04-04 Claude subscription policy change.** ClawFleet's recommended path uses ChatGPT (Codex OAuth) — your existing ChatGPT Plus/Pro subscription works as-is. No migration needed.
+5 minutes: Docker installed, image pulled, dashboard running at `http://localhost:8080`. Connect any model provider with a single API key — every instance runs in its own Docker container with full isolation.
 
 [![Install Demo](https://img.youtube.com/vi/jE5ZR8g477s/maxresdefault.jpg)](https://youtu.be/jE5ZR8g477s)
 [![▶ Watch Install Demo (30s)](https://img.shields.io/badge/▶_Watch_Install_Demo-30s-red?style=for-the-badge&logo=youtube)](https://youtu.be/jE5ZR8g477s)
@@ -38,7 +36,7 @@ curl -fsSL https://clawfleet.io/install.sh | sh
 
 - **Sandboxed instances** — each OpenClaw runs in its own Docker container, isolated from your host and from each other. No rogue skill can read your files
 - **Browser dashboard** — create, configure, monitor, and destroy instances without touching a terminal
-- **ChatGPT login** — authenticate with your existing ChatGPT account, or use API keys from OpenAI, Anthropic, Google AI Studio, DeepSeek
+- **Any LLM provider** — connect with a single API key from OpenAI, Anthropic, Google AI Studio, or DeepSeek
 - **Version pinning** — lock a tested OpenClaw version so upstream breaking changes don't touch you
 - **Fleet management** — spin up as many instances as your RAM allows, each with different models, personas, and channels
 - **Character system** — define reusable personas (bio, backstory, style, traits) and assign them to instances

@@ -25,9 +25,7 @@
 curl -fsSL https://clawfleet.io/install.sh | sh
 ```
 
-5 分钟：Docker 自动安装、镜像拉取完毕、Dashboard 在 `http://localhost:8080` 运行。用 ChatGPT 账号登录——已有的 Plus 订阅即可驱动推理，无需 API Key。
-
-> **不受 2026-04-04 Claude 订阅策略变更影响。** ClawFleet 推荐使用 ChatGPT (Codex OAuth) —— 你现有的 ChatGPT Plus/Pro 订阅直接可用，无需迁移。
+5 分钟：Docker 自动安装、镜像拉取完毕、Dashboard 在 `http://localhost:8080` 运行。一个 API Key 即可接入任意模型供应商——每个实例独立运行在 Docker 容器中，完全隔离。
 
 [![安装演示](https://img.youtube.com/vi/jE5ZR8g477s/maxresdefault.jpg)](https://youtu.be/jE5ZR8g477s)
 [![▶ 观看安装演示 (30秒)](https://img.shields.io/badge/▶_观看安装演示-30秒-red?style=for-the-badge&logo=youtube)](https://youtu.be/jE5ZR8g477s)
@@ -38,7 +36,7 @@ curl -fsSL https://clawfleet.io/install.sh | sh
 
 - **沙箱隔离** — 每个 OpenClaw 跑在独立 Docker 容器中，与宿主机和其他实例完全隔离。恶意技能无法读取你的文件
 - **浏览器管理** — 创建、配置、监控、销毁实例，全程无需触碰终端
-- **ChatGPT 登录** — 用已有的 ChatGPT 账号认证，或使用 OpenAI、Anthropic、Google AI Studio、DeepSeek 的 API Key
+- **多供应商支持** — 一个 API Key 接入 OpenAI、Anthropic、Google AI Studio 或 DeepSeek
 - **版本锁定** — 锁定已测试的 OpenClaw 版本，上游 breaking changes 与你无关
 - **军团管理** — 按内存允许的数量创建实例，每个可配置不同模型、人设和频道
 - **人设系统** — 定义可复用的角色人设（简介、背景、风格、特征），赋予每个实例

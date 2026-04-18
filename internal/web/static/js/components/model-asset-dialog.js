@@ -16,7 +16,7 @@ export function ModelAssetDialog({ model, onClose, onSave, addToast }) {
   const isCodex = (model?.provider === 'openai-codex');
 
   const [name, setName] = useState(model?.name || '');
-  const [provider, setProvider] = useState(model?.provider || 'openai-codex');
+  const [provider, setProvider] = useState(model?.provider || 'openai');
   const [apiKey, setApiKey] = useState(model?.api_key || '');
   const [selectedModel, setSelectedModel] = useState(model?.model || '');
   const [customModel, setCustomModel] = useState('');
@@ -178,8 +178,8 @@ export function ModelAssetDialog({ model, onClose, onSave, addToast }) {
               ${t('configure.provider')}
               <select class="form-input" value=${provider} onChange=${(e) => handleProviderChange(e.target.value)}
                 disabled=${isEdit && isCodex}>
-                <option value="openai-codex">ChatGPT (Codex) ★ ${t('image.recommended')}</option>
-                <option value="openai">OpenAI</option>
+                <option value="openai">OpenAI ★ ${t('image.recommended')}</option>
+                <option value="openai-codex">ChatGPT (Codex) ⚠️</option>
                 <option value="anthropic">Anthropic</option>
                 <option value="google">Google AI Studio</option>
                 <option value="deepseek">DeepSeek</option>
@@ -187,8 +187,8 @@ export function ModelAssetDialog({ model, onClose, onSave, addToast }) {
             </label>
 
             ${isCodexProvider && html`
-              <p style="margin:8px 0 4px;color:var(--text-secondary);font-size:0.85rem">
-                ${t('assets.codexHint')}
+              <p style="margin:8px 0 4px;color:#f59e0b;font-size:0.85rem">
+                ⚠️ ${t('assets.codexUnavailable')}
               </p>
             `}
 
