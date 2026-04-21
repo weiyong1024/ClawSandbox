@@ -25,6 +25,12 @@ type Instance struct {
 	ModelAssetID     string    `json:"model_asset_id,omitempty"`
 	ChannelAssetID   string    `json:"channel_asset_id,omitempty"`
 	CharacterAssetID string    `json:"character_asset_id,omitempty"`
+	RuntimeType      string    `json:"runtime_type,omitempty"`
+}
+
+// IsHermes reports whether this instance uses the Hermes runtime.
+func (inst *Instance) IsHermes() bool {
+	return inst.RuntimeType == "hermes"
 }
 
 type Store struct {
