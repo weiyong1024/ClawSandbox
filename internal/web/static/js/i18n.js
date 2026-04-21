@@ -26,6 +26,7 @@ const messages = {
     'card.resume':           '▶ Resume',
     'card.destroy':          '🗑 Destroy',
     'card.unconfigured':     'Not configured',
+    'card.hermesUnconfigured': 'Configure in Dashboard →',
     'status.suspended':      'suspended',
 
     'create.title':          'Create Instances',
@@ -254,6 +255,7 @@ const messages = {
     'card.resume':           '▶ 复位',
     'card.destroy':          '🗑 销毁',
     'card.unconfigured':     '未配置',
+    'card.hermesUnconfigured': '在 Dashboard 中配置 →',
     'status.suspended':      '挂起中',
 
     'create.title':          '创建实例',

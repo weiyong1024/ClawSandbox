@@ -77,7 +77,7 @@ export function InstanceCard({ instance, stats, pending, selected, onToggleSelec
         ` : ''}
         ${!instance.model_name && !instance.channel_name && !instance.character_name ? html`
           <div class="config-item">
-            <span class="config-value config-unconfigured">${t('card.unconfigured')}</span>
+            <span class="config-value config-unconfigured">${isHermes ? t('card.hermesUnconfigured') : t('card.unconfigured')}</span>
           </div>
         ` : ''}
       </div>
