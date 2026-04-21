@@ -260,8 +260,56 @@ body {
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
 }
 
-.card-running { border-left: 3px solid var(--success); }
-.card-stopped { border-left: 3px solid var(--text-dim); }
+/* OpenClaw instances: orange left accent (matches OpenClaw brand) */
+.card-running.card-openclaw { border-left: 5px solid #f97316; }
+.card-stopped.card-openclaw { border-left: 5px solid rgba(249, 115, 22, 0.3); }
+
+/* Hermes instances: emerald/teal left accent */
+.card-running.card-hermes {
+  border-left: 5px solid #2dd4bf;
+  background: linear-gradient(135deg, var(--surface) 0%, rgba(45, 212, 191, 0.04) 100%);
+}
+.card-stopped.card-hermes {
+  border-left: 5px solid rgba(45, 212, 191, 0.3);
+}
+
+/* Runtime badge in card header */
+.runtime-badge {
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-left: 8px;
+  letter-spacing: 0.03em;
+}
+.runtime-badge-openclaw {
+  background: rgba(249, 115, 22, 0.12);
+  color: #f97316;
+}
+.runtime-badge-hermes {
+  background: rgba(45, 212, 191, 0.12);
+  color: #2dd4bf;
+}
+
+/* Runtime group header in fleet list */
+.runtime-group-header {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 8px 0 12px;
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.runtime-group-header-openclaw { color: #f97316; }
+.runtime-group-header-hermes { color: #2dd4bf; }
+.runtime-group-divider {
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
 
 .card-selected {
   border-color: var(--danger);

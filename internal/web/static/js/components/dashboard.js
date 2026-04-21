@@ -63,8 +63,10 @@ export function Dashboard({ instances, stats, loading, pending, selected, onTogg
             </label>
           </div>
         `}
-        <div class="dashboard-grid">
-          ${instances.map(inst => html`
+        ${(() => {
+          const openclawInsts = instances.filter(i => i.runtime_type !== 'hermes');
+          const hermesInsts = instances.filter(i => i.runtime_type === 'hermes');
+          const renderCard = (inst) => html`
             <${InstanceCard}
               key=${inst.name}
               instance=${inst}
@@ -83,8 +85,30 @@ export function Dashboard({ instances, stats, loading, pending, selected, onTogg
               onSkills=${() => onSkills(inst.name)}
               onHermesDashboard=${() => onHermesDashboard(inst.name)}
             />
-          `)}
-        </div>
+          `;
+          return html`
+            ${openclawInsts.length > 0 && html`
+              ${hermesInsts.length > 0 && html`
+                <div class="runtime-group-header runtime-group-header-openclaw">
+                  🦞 OpenClaw
+                  <div class="runtime-group-divider"></div>
+                </div>
+              `}
+              <div class="dashboard-grid">
+                ${openclawInsts.map(renderCard)}
+              </div>
+            `}
+            ${hermesInsts.length > 0 && html`
+              <div class="runtime-group-header runtime-group-header-hermes">
+                ☤ Hermes
+                <div class="runtime-group-divider"></div>
+              </div>
+              <div class="dashboard-grid">
+                ${hermesInsts.map(renderCard)}
+              </div>
+            `}
+          `;
+        })()}
       `}
     </div>
   `;

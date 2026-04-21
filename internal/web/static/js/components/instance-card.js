@@ -17,15 +17,15 @@ export function InstanceCard({ instance, stats, pending, selected, onToggleSelec
     : isRunning ? instance.status : t('status.suspended');
 
   return html`
-    <div class="card ${isRunning ? 'card-running' : 'card-stopped'} ${busy ? 'card-busy' : ''} ${selected ? 'card-selected' : ''}">
+    <div class="card ${isRunning ? 'card-running' : 'card-stopped'} ${isHermes ? 'card-hermes' : 'card-openclaw'} ${busy ? 'card-busy' : ''} ${selected ? 'card-selected' : ''}">
       <div class="card-header">
         <div class="card-header-left">
           <input type="checkbox" class="card-checkbox"
             checked=${selected}
             onClick=${(e) => { e.stopPropagation(); onToggleSelect(instance.name); }} />
           <div class="card-name">${instance.name}${isHermes
-            ? html`<span style="font-size:0.65rem;padding:2px 6px;border-radius:4px;margin-left:8px;background:rgba(76,175,80,0.2);color:#4caf50">☤ Hermes</span>`
-            : ''
+            ? html`<span class="runtime-badge runtime-badge-hermes">☤ Hermes</span>`
+            : html`<span class="runtime-badge runtime-badge-openclaw">🦞 OpenClaw</span>`
           }</div>
         </div>
         <span class="status-badge ${isRunning ? 'status-running' : 'status-stopped'}">
@@ -35,14 +35,25 @@ export function InstanceCard({ instance, stats, pending, selected, onToggleSelec
       </div>
 
       <div class="card-ports">
-        <div class="port-item">
-          <span class="port-label">noVNC</span>
-          <span class="port-value">${instance.novnc_port}</span>
-        </div>
-        <div class="port-item">
-          <span class="port-label">Gateway</span>
-          <span class="port-value">${instance.gateway_port}</span>
-        </div>
+        ${isHermes ? html`
+          <div class="port-item">
+            <span class="port-label">Dashboard</span>
+            <span class="port-value">${instance.hermes_dashboard_port}</span>
+          </div>
+          <div class="port-item">
+            <span class="port-label">Gateway</span>
+            <span class="port-value">${instance.hermes_gateway_port}</span>
+          </div>
+        ` : html`
+          <div class="port-item">
+            <span class="port-label">noVNC</span>
+            <span class="port-value">${instance.novnc_port}</span>
+          </div>
+          <div class="port-item">
+            <span class="port-label">Gateway</span>
+            <span class="port-value">${instance.gateway_port}</span>
+          </div>
+        `}
       </div>
 
       <div class="card-config">
