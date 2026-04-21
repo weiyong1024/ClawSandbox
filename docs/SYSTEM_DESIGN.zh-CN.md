@@ -1,6 +1,6 @@
 # ClawFleet 系统设计文档
 
-> 版本: v0.9.4 | 日期: 2026-04-06
+> 版本: v1.2.0 | 日期: 2026-04-21
 
 [English](./SYSTEM_DESIGN.md)
 
@@ -148,7 +148,50 @@ ClawFleet 分为两层：产品层（Web Dashboard、CLI、资产管理）和基
 
 **角色资产：** 人设定义（名称、角色、性格、背景、特点、约束）。渲染为 `SOUL.md` Markdown 并写入实例的 `~/.openclaw/SOUL.md`。Gateway 会在文件变更时热加载。
 
-### 3.5 Codex OAuth（ChatGPT 订阅登录）
+### 3.5 多运行时支持（OpenClaw + Hermes）
+
+ClawFleet 支持两种 AI agent 运行时：**OpenClaw** 和 **Hermes Agent**，采用完全不同的镜像策略。
+
+**镜像策略对比：**
+
+| | OpenClaw | Hermes Agent |
+|---|---|---|
+| **镜像来源** | ClawFleet 自建（`ghcr.io/clawfleet/clawfleet`） | Nous Research 官方（`nousresearch/hermes-agent`） |
+| **基础镜像** | `node:22-bookworm` + XFCE/noVNC/supervisord/Chromium | Debian 13 + Python 3.13 + uv |
+| **版本控制** | ClawFleet 每个 release 锁定 `RecommendedOpenClawVersion` | 跟随官方 `latest` tag |
+| **CI 构建** | 每次发版自动构建 | ClawFleet 不构建 |
+| **选型理由** | OpenClaw 仅提供 npm 包，无官方 Docker 镜像——需要自建以添加桌面、进程管理、Gateway 桥接和自动恢复 | Hermes 官方镜像已包含 Dashboard + Gateway + CLI 全部功能 |
+
+**为什么 OpenClaw 需要自建镜像：**
+
+OpenClaw 仅以 `npm install -g openclaw` 形式发布。我们的镜像添加了 OpenClaw 本身不提供的组件：
+
+| 组件 | 用途 | 缺少会怎样 |
+|------|------|-----------|
+| XFCE4 + TigerVNC + noVNC | 浏览器可访问的桌面（Desktop 按钮） | 无桌面访问 |
+| supervisord | 多进程管理（VNC + Gateway + Bridge） | 每个容器只能跑一个进程 |
+| gateway-bridge | Gateway 从 localhost:18789 桥接到 0.0.0.0:18790 | Control Panel 无法从宿主机访问 |
+| entrypoint.sh + `.configured` 标记 | 容器重启后自动恢复 | 每次重启需手动 configure |
+| Chromium + Playwright | 浏览器技能（web_search 等） | 需要浏览器的技能不可用 |
+| CJK 字体 | 中日韩文字渲染 | 桌面/截图中文乱码 |
+
+**运行时检测：**
+
+每个 `Instance` 有 `RuntimeType` 字段（`"openclaw"` 或 `"hermes"`），决定：端口映射、卷挂载、启动命令、Dashboard 按钮、可用 API 操作。
+
+**Hermes 容器启动：**
+
+覆盖官方 entrypoint，同时运行 Dashboard 和 Gateway：
+```bash
+hermes dashboard --host 0.0.0.0 --port 9119 --no-open --insecure &
+exec hermes gateway run
+```
+
+**CLI Shell 访问：**
+
+`clawfleet shell <name>` 提供交互式终端：Hermes 实例启动 TUI 对话界面，OpenClaw 实例打开 bash shell。
+
+### 3.6 Codex OAuth（ChatGPT 订阅登录）
 
 拥有 ChatGPT Plus/Pro 订阅的用户可以通过 OAuth 登录，无需 API Key。这是默认推荐的供应商。
 
@@ -207,7 +250,7 @@ SSH tunnel 尝试绑定 :1455 → 失败（已被占用）→ 无害警告。
 
 OpenClaw 运行时通过存储的 refresh token 自动刷新过期的 access token。
 
-### 3.6 实例配置
+### 3.7 实例配置
 
 用户在 Dashboard 中点击"配置"时，系统通过 `docker exec` 执行多步配置序列：
 
@@ -237,7 +280,7 @@ OpenClaw 运行时通过存储的 refresh token 自动刷新过期的 access tok
 
 **实例重置：** `POST /instances/{name}/reset` 清除 OpenClaw 配置（`openclaw.json`、`agents/`、`sessions/`、`channels/`、`.configured`），保留 Docker 容器。重启容器清理 V8 缓存。释放已分配的渠道资产，触发其他运行实例的花名册刷新。
 
-### 3.7 花名册系统
+### 3.8 花名册系统
 
 花名册通过向每个实例的 `SOUL.md` 注入团队元数据来实现 bot 间协作。每个 bot 知道团队里有谁、角色是什么、什么时候应该 @对方。
 
@@ -259,14 +302,14 @@ OpenClaw 运行时通过存储的 refresh token 自动刷新过期的 access tok
 
 **批量销毁：** `POST /instances/batch-destroy` 接受实例名列表，单次 state 加载/保存。单个失败不阻断其他实例。所有删除完成后统一触发花名册刷新。
 
-### 3.8 技能管理
+### 3.9 技能管理
 
 - **内置技能（52 个）：** 随 OpenClaw 一起发布。状态取决于二进制/环境依赖。
 - **托管技能：** 通过 `npx clawhub` 安装到 `~/.openclaw/skills/`。
 - Dashboard 提供搜索（通过 ClawHub API）、安装和卸载操作。
 - ClawHub 有速率限制（~20 次/分钟）— 错误会被优雅处理。
 
-### 3.9 快照系统（灵魂归档）
+### 3.10 快照系统（灵魂归档）
 
 快照捕获实例的 OpenClaw 数据目录以供后续复用：
 
@@ -274,7 +317,7 @@ OpenClaw 运行时通过存储的 refresh token 自动刷新过期的 access tok
 - **加载：** 快照可恢复到新实例。
 - **元数据：** 名称、来源实例、创建时间戳存储在 `state.json` 中。
 
-### 3.10 端口分配
+### 3.11 端口分配
 
 从配置的基础端口顺序分配：
 
@@ -287,7 +330,7 @@ claw-N     6900+N   18788+N          18789+N
 
 分配前通过 `net.Listen` 探测端口可用性，避免冲突。
 
-### 3.11 状态管理
+### 3.12 状态管理
 
 **状态文件：** `~/.clawfleet/state.json` — 实例、资产和快照的元数据缓存。容器实际状态以 Docker 为准；CLI 每次操作时与 Docker API 对账。
 
@@ -310,7 +353,7 @@ claw-N     6900+N   18788+N          18789+N
 }
 ```
 
-### 3.12 数据卷
+### 3.13 数据卷
 
 ```
 ~/.clawfleet/
@@ -334,7 +377,7 @@ claw-N     6900+N   18788+N          18789+N
 
 容器重启后数据保留。`clawfleet destroy --purge` 可同时删除。
 
-### 3.13 网络设计
+### 3.14 网络设计
 
 - Bridge 网络 `clawfleet-net` 在首次使用时创建
 - 容器可通过容器名互相访问（用于实例间通信）
