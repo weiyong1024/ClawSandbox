@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -21,19 +22,45 @@ type CreateParams struct {
 	DataDir     string
 	MemoryBytes int64
 	NanoCPUs    int64
+	RuntimeType string
 }
 
 func Create(cli *docker.Client, p CreateParams) (string, error) {
-	portBindings := map[docker.Port][]docker.PortBinding{
-		"6901/tcp":  {{HostIP: "127.0.0.1", HostPort: strconv.Itoa(p.NoVNCPort)}},
-		"18790/tcp": {{HostIP: "127.0.0.1", HostPort: strconv.Itoa(p.GatewayPort)}},
-	}
-	exposedPorts := map[docker.Port]struct{}{
-		"6901/tcp":  {},
-		"18790/tcp": {},
-	}
+	var (
+		portBindings map[docker.Port][]docker.PortBinding
+		exposedPorts map[docker.Port]struct{}
+		binds        []string
+		env          []string
+	)
 
-	binds := []string{fmt.Sprintf("%s:/home/node/.openclaw", p.DataDir)}
+	if p.RuntimeType == "hermes" {
+		portBindings = map[docker.Port][]docker.PortBinding{
+			"9119/tcp": {{HostIP: "127.0.0.1", HostPort: strconv.Itoa(p.NoVNCPort)}},
+			"3000/tcp": {{HostIP: "127.0.0.1", HostPort: strconv.Itoa(p.GatewayPort)}},
+		}
+		exposedPorts = map[docker.Port]struct{}{
+			"9119/tcp": {},
+			"3000/tcp": {},
+		}
+		binds = []string{fmt.Sprintf("%s:/opt/data", p.DataDir)}
+		env = []string{
+			fmt.Sprintf("HERMES_UID=%d", os.Getuid()),
+			fmt.Sprintf("HERMES_GID=%d", os.Getgid()),
+		}
+	} else {
+		portBindings = map[docker.Port][]docker.PortBinding{
+			"6901/tcp":  {{HostIP: "127.0.0.1", HostPort: strconv.Itoa(p.NoVNCPort)}},
+			"18790/tcp": {{HostIP: "127.0.0.1", HostPort: strconv.Itoa(p.GatewayPort)}},
+		}
+		exposedPorts = map[docker.Port]struct{}{
+			"6901/tcp":  {},
+			"18790/tcp": {},
+		}
+		binds = []string{fmt.Sprintf("%s:/home/node/.openclaw", p.DataDir)}
+		env = []string{
+			"PLAYWRIGHT_BROWSERS_PATH=/ms-playwright",
+		}
+	}
 
 	container, err := cli.CreateContainer(docker.CreateContainerOptions{
 		Name: p.Name,
@@ -41,9 +68,7 @@ func Create(cli *docker.Client, p CreateParams) (string, error) {
 			Image:        p.ImageRef,
 			ExposedPorts: exposedPorts,
 			Labels:       map[string]string{cfg.LabelManaged: "true"},
-			Env: []string{
-				"PLAYWRIGHT_BROWSERS_PATH=/ms-playwright",
-			},
+			Env:          env,
 		},
 		HostConfig: &docker.HostConfig{
 			Binds:        binds,
