@@ -154,6 +154,13 @@ function App() {
     }
   };
 
+  const onHermesDashboard = (name) => {
+    const inst = instances.find(i => i.name === name);
+    if (inst && inst.hermes_dashboard_port) {
+      window.open(`http://localhost:${inst.hermes_dashboard_port}/`, '_blank');
+    }
+  };
+
   const onRestartBot = async (name) => {
     if (!confirm(t('confirm.restartBot', name))) return;
     await withPending(name, 'restarting', async () => {
@@ -284,6 +291,7 @@ function App() {
           onConfigure=${(name) => setConfigureName(name)}
           onSnapshot=${onSnapshot}
           onSkills=${(name) => setSkillsName(name)}
+          onHermesDashboard=${onHermesDashboard}
           onCreateClick=${() => setShowCreate(true)}
         />
       `;

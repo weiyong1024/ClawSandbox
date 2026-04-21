@@ -2,9 +2,10 @@ import { html } from '../lib.js';
 import { useLang } from '../i18n.js';
 import { formatBytes } from '../utils.js';
 
-export function InstanceCard({ instance, stats, pending, selected, onToggleSelect, onStart, onStop, onDestroy, onDesktop, onConsole, onRestartBot, onConfigure, onSnapshot, onSkills }) {
+export function InstanceCard({ instance, stats, pending, selected, onToggleSelect, onStart, onStop, onDestroy, onDesktop, onConsole, onRestartBot, onConfigure, onSnapshot, onSkills, onHermesDashboard }) {
   const { t } = useLang();
   const isRunning = instance.status === 'running';
+  const isHermes = instance.runtime_type === 'hermes';
   const cpu = stats?.cpu_percent ?? 0;
   const memUsed = stats?.memory_usage ?? 0;
   const memLimit = stats?.memory_limit ?? 1;
@@ -22,7 +23,10 @@ export function InstanceCard({ instance, stats, pending, selected, onToggleSelec
           <input type="checkbox" class="card-checkbox"
             checked=${selected}
             onClick=${(e) => { e.stopPropagation(); onToggleSelect(instance.name); }} />
-          <div class="card-name">${instance.name}</div>
+          <div class="card-name">${instance.name}${isHermes
+            ? html`<span style="font-size:0.65rem;padding:2px 6px;border-radius:4px;margin-left:8px;background:rgba(76,175,80,0.2);color:#4caf50">☤ Hermes</span>`
+            : ''
+          }</div>
         </div>
         <span class="status-badge ${isRunning ? 'status-running' : 'status-stopped'}">
           <span class="status-dot"></span>
@@ -88,22 +92,27 @@ export function InstanceCard({ instance, stats, pending, selected, onToggleSelec
 
       <div class="card-actions">
         ${isRunning ? html`
-          <button class="btn btn-sm btn-desktop" onClick=${onDesktop} disabled=${busy}>${t('card.desktop')}</button>
-          <button class="btn btn-sm btn-desktop" onClick=${onConsole} disabled=${busy}>${t('card.controlPanel')}</button>
-          <button class="btn btn-sm btn-configure" onClick=${onConfigure} disabled=${busy}>
-            ${pending === 'configuring' ? t('action.configuring') : t('card.configure')}
-          </button>
-          <button class="btn btn-sm btn-configure" onClick=${onSkills} disabled=${busy}>
-            ${t('card.skills')}
-          </button>
-          ${instance.model_name && html`
-            <button class="btn btn-sm btn-snapshot" onClick=${onSnapshot} disabled=${busy}>
-              ${t('card.snapshot')}
+          ${!isHermes && html`
+            <button class="btn btn-sm btn-desktop" onClick=${onDesktop} disabled=${busy}>${t('card.desktop')}</button>
+            <button class="btn btn-sm btn-desktop" onClick=${onConsole} disabled=${busy}>${t('card.controlPanel')}</button>
+            <button class="btn btn-sm btn-configure" onClick=${onConfigure} disabled=${busy}>
+              ${pending === 'configuring' ? t('action.configuring') : t('card.configure')}
+            </button>
+            <button class="btn btn-sm btn-configure" onClick=${onSkills} disabled=${busy}>
+              ${t('card.skills')}
+            </button>
+            ${instance.model_name && html`
+              <button class="btn btn-sm btn-snapshot" onClick=${onSnapshot} disabled=${busy}>
+                ${t('card.snapshot')}
+              </button>
+            `}
+            <button class="btn btn-sm btn-reset" onClick=${onRestartBot} disabled=${busy}>
+              ${pending === 'restarting' ? t('action.restarting') : t('card.restartBot')}
             </button>
           `}
-          <button class="btn btn-sm btn-reset" onClick=${onRestartBot} disabled=${busy}>
-            ${pending === 'restarting' ? t('action.restarting') : t('card.restartBot')}
-          </button>
+          ${isHermes && html`
+            <button class="btn btn-sm btn-desktop" onClick=${onHermesDashboard} disabled=${busy}>${t('card.hermesDashboard')}</button>
+          `}
           <button class="btn btn-sm btn-warning" onClick=${onStop} disabled=${busy}>
             ${pending === 'stopping' ? t('action.stopping') : t('card.suspend')}
           </button>

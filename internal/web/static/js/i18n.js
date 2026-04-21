@@ -156,6 +156,7 @@ const messages = {
     'skills.searchHint':     'Search 13,000+ community skills on ClawHub',
     'skills.requiresRunning':'Instance must be running to manage skills.',
     'card.skills':           'Skills',
+    'card.hermesDashboard':  '⚕ Dashboard',
 
     // Characters
     'sidebar.characters':    'Character Config',
@@ -383,6 +384,7 @@ const messages = {
     'skills.searchHint':     '在 ClawHub 搜索 13,000+ 社区技能',
     'skills.requiresRunning':'实例必须处于运行状态才能管理技能。',
     'card.skills':           '技能',
+    'card.hermesDashboard':  '⚕ 控制台',
 
     // Characters
     'sidebar.characters':    'Character 配置',
