@@ -1,6 +1,6 @@
 # ClawFleet System Design
 
-> Version: v0.9.4 | Date: 2026-04-06
+> Version: v1.2.0 | Date: 2026-04-21
 
 [中文文档](./SYSTEM_DESIGN.zh-CN.md)
 
@@ -139,7 +139,63 @@ An embedded Preact SPA served by the Go HTTP server at port 8080.
 
 **entrypoint.sh:** Creates `.vnc` and `.openclaw` directories, sets VNC password if `$VNC_PASSWORD` is provided, auto-starts OpenClaw if `.configured` marker exists, then launches supervisord.
 
-### 3.4 Asset Management
+### 3.4 Multi-Runtime Support (OpenClaw + Hermes)
+
+ClawFleet supports two AI agent runtimes: **OpenClaw** and **Hermes Agent**. They use fundamentally different image strategies.
+
+**Image strategy comparison:**
+
+| | OpenClaw | Hermes Agent |
+|---|---|---|
+| **Image source** | Custom-built by ClawFleet (`ghcr.io/clawfleet/clawfleet`) | Official from Nous Research (`nousresearch/hermes-agent`) |
+| **Base** | `node:22-bookworm` + XFCE/noVNC/supervisord/Chromium | Debian 13 + Python 3.13 + uv |
+| **Version control** | ClawFleet pins `RecommendedOpenClawVersion` per release | Follows official `latest` tag |
+| **CI build** | Every ClawFleet release triggers image build | Not built by ClawFleet |
+| **Why this model** | OpenClaw is an npm package with no official Docker image — we add desktop, process management, gateway bridge, and auto-recovery | Hermes ships a complete Docker image with dashboard + gateway + CLI |
+
+**Why OpenClaw needs a custom image:**
+
+OpenClaw distributes as `npm install -g openclaw` only. Our image adds components that OpenClaw itself doesn't provide:
+
+| Component | Purpose | Without it |
+|-----------|---------|-----------|
+| XFCE4 + TigerVNC + noVNC | Browser-accessible desktop (Desktop button) | No desktop access |
+| supervisord | Multi-process management (VNC + Gateway + Bridge) | Can only run one process per container |
+| gateway-bridge | Exposes Gateway on 0.0.0.0:18790 for Docker port mapping | Control Panel unreachable from host |
+| entrypoint.sh + `.configured` marker | Auto-recovery after container restart | Manual reconfigure on every restart |
+| Chromium + Playwright | Browser-based skills (web_search, screenshots) | Skills that need a browser fail |
+| CJK fonts | Chinese/Japanese/Korean text rendering | Garbled text in desktop/screenshots |
+
+**Why Hermes uses the official image:**
+
+Hermes's official Docker image already includes everything needed: dashboard server, gateway, CLI, skill sync, and config bootstrap. No additional components needed.
+
+**Runtime detection:**
+
+Each `Instance` has a `RuntimeType` field (`"openclaw"` or `"hermes"`). This determines:
+- Which image to pull/use at creation time
+- Port mapping (OpenClaw: noVNC 6901 + Gateway 18790; Hermes: Dashboard 9119 + Gateway 3000)
+- Volume mount (OpenClaw: `/home/node/.openclaw`; Hermes: `/opt/data`)
+- Container startup command (OpenClaw: supervisord; Hermes: custom entrypoint running dashboard + gateway)
+- Which Dashboard buttons are shown (OpenClaw: Desktop/Control Panel/Configure/Skills; Hermes: Dashboard only)
+- Which API operations are allowed (Configure, Skills, Restart Bot are OpenClaw-only)
+
+**Hermes container startup:**
+
+The official Hermes entrypoint does UID/GID remapping + setup, then `exec hermes "$@"`. ClawFleet overrides the entrypoint to run both dashboard and gateway simultaneously:
+
+```bash
+hermes dashboard --host 0.0.0.0 --port 9119 --no-open --insecure &
+exec hermes gateway run
+```
+
+**CLI shell access:**
+
+`clawfleet shell <name>` provides interactive terminal access:
+- Hermes instances: launches the Hermes TUI (interactive chat)
+- OpenClaw instances: opens a bash shell as the node user
+
+### 3.5 Asset Management
 
 Assets are shared resources that can be assigned to instances.
 
@@ -149,7 +205,7 @@ Assets are shared resources that can be assigned to instances.
 
 **Character assets:** Persona definition (name, role, personality, backstory, quirks, constraints). Rendered into `SOUL.md` Markdown and written to the instance's `~/.openclaw/SOUL.md`. The Gateway hot-reloads this file on change.
 
-### 3.5 Codex OAuth (ChatGPT Subscription Login)
+### 3.6 Codex OAuth (ChatGPT Subscription Login)
 
 Users with a ChatGPT Plus/Pro subscription can authenticate via OAuth instead of API keys. This is the recommended and default provider.
 
@@ -208,7 +264,7 @@ If no local Dashboard is running:
 
 OpenClaw handles token refresh internally at runtime using the stored refresh token.
 
-### 3.6 Instance Configuration
+### 3.7 Instance Configuration
 
 When a user clicks "Configure" on an instance in the Dashboard, the system applies a multi-step configuration sequence via `docker exec`:
 
@@ -238,7 +294,7 @@ Configuration status is tracked and reported to the frontend in real-time.
 
 **Instance reset:** `POST /instances/{name}/reset` purges the instance's OpenClaw configuration (`openclaw.json`, `agents/`, `sessions/`, `channels/`, `.configured` marker) while preserving the Docker container. The container is restarted to clear Node.js V8 caches. Reset releases any assigned channel asset (allowing reassignment) and triggers roster refresh for other running instances.
 
-### 3.7 Roster System
+### 3.8 Roster System
 
 The Roster enables bot-to-bot collaboration by injecting team metadata into each instance's `SOUL.md`. Each bot knows who is on the team, what their role is, and when to @mention them.
 
@@ -260,14 +316,14 @@ Refresh is best-effort — errors are logged but do not fail the primary operati
 
 **Batch destroy:** `POST /instances/batch-destroy` accepts a list of instance names and destroys them in a single state load/save cycle. Individual failures do not block others (partial success). Roster refresh is triggered once after all deletions complete.
 
-### 3.8 Skill Management
+### 3.9 Skill Management
 
 - **Bundled skills (52):** Ship with OpenClaw. Status depends on binary/environment requirements.
 - **Managed skills:** Installed via `npx clawhub` to `~/.openclaw/skills/`.
 - The Dashboard provides search (via ClawHub API), install, and uninstall operations.
 - ClawHub has rate limits (~20 requests/minute) — errors are handled gracefully.
 
-### 3.9 Snapshot System (Soul Archival)
+### 3.10 Snapshot System (Soul Archival)
 
 Snapshots capture an instance's OpenClaw data directory for later reuse:
 
@@ -275,7 +331,7 @@ Snapshots capture an instance's OpenClaw data directory for later reuse:
 - **Load:** A snapshot can be restored into a new instance.
 - **Metadata:** Name, source instance, creation timestamp stored in `state.json`.
 
-### 3.10 Port Allocation
+### 3.11 Port Allocation
 
 Sequential allocation from configured base ports:
 
@@ -288,7 +344,7 @@ claw-N     6900+N   18788+N              18789+N
 
 Ports are probed via `net.Listen` before allocation to avoid conflicts.
 
-### 3.11 State Management
+### 3.12 State Management
 
 **State file:** `~/.clawfleet/state.json` — metadata cache for instances, assets, and snapshots. Docker is the source of truth for container status; the CLI reconciles on every operation.
 
@@ -311,7 +367,7 @@ Ports are probed via `net.Listen` before allocation to avoid conflicts.
 }
 ```
 
-### 3.12 Data Volumes
+### 3.13 Data Volumes
 
 ```
 ~/.clawfleet/
@@ -335,7 +391,7 @@ Ports are probed via `net.Listen` before allocation to avoid conflicts.
 
 Data persists across container restarts. `clawfleet destroy --purge` removes it.
 
-### 3.13 Network Design
+### 3.14 Network Design
 
 - Bridge network `clawfleet-net` created on first use
 - Containers can reach each other by name (used for inter-instance communication)
