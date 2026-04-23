@@ -280,7 +280,9 @@ func Configure(cli *docker.Client, p ConfigureParams) error {
 			return fmt.Errorf("waiting for Slack gateway start: %w", err)
 		}
 	} else if p.Channel != "" && p.ChannelToken != "" {
-		// Telegram/Discord: start gateway → channels add → stop → policies → restart.
+		// Telegram/Discord: start gateway → channels add → policies (no stop/restart).
+		// channels add MUST run with gateway online so the Discord client initializes
+		// properly. Policies are applied via hot-reload — no gateway restart needed.
 		if err := dockerExecAs(cli, p.ContainerID, "root", []string{
 			"supervisorctl", "start", "openclaw", "gateway-bridge",
 		}); err != nil {
@@ -290,16 +292,27 @@ func Configure(cli *docker.Client, p ConfigureParams) error {
 			return fmt.Errorf("waiting for gateway: %w", err)
 		}
 
-		if err := dockerExecAs(cli, p.ContainerID, "node", []string{
-			"openclaw", "channels", "add",
-			"--channel", pluginName,
-			"--token", p.ChannelToken,
-		}); err != nil {
-			return fmt.Errorf("channels add: %w", err)
+		// channels add with retry — ConfigMutationConflictError can occur when
+		// the gateway's hot-reload races with the config write.
+		var addErr error
+		for attempt := 0; attempt < 3; attempt++ {
+			addErr = dockerExecAs(cli, p.ContainerID, "node", []string{
+				"openclaw", "channels", "add",
+				"--channel", pluginName,
+				"--token", p.ChannelToken,
+			})
+			if addErr == nil {
+				break
+			}
+			time.Sleep(2 * time.Second)
+		}
+		if addErr != nil {
+			return fmt.Errorf("channels add: %w", addErr)
 		}
 
-		// Stop gateway before writing policy changes so they are
-		// applied offline — no hot-reload with incomplete intermediate config.
+		// Stop gateway before writing policies. Multiple rapid config set calls
+		// while gateway is running trigger cascading hot-reloads → restart loop.
+		// Writing all policies offline then starting once avoids this entirely.
 		if err := dockerExecAs(cli, p.ContainerID, "root", []string{
 			"supervisorctl", "stop", "openclaw",
 		}); err != nil {
@@ -321,14 +334,15 @@ func Configure(cli *docker.Client, p ConfigureParams) error {
 			}
 		}
 
-		// Start gateway with the complete, final config.
+		// Final start with complete config. channels add already initialized
+		// the Discord client state; this restart picks up all policies cleanly.
 		if err := dockerExecAs(cli, p.ContainerID, "root", []string{
 			"supervisorctl", "start", "openclaw", "gateway-bridge",
 		}); err != nil {
 			return fmt.Errorf("supervisorctl start after policies: %w", err)
 		}
 		if err := waitForGateway(cli, p.ContainerID, 30*time.Second); err != nil {
-			return fmt.Errorf("waiting for gateway restart: %w", err)
+			return fmt.Errorf("waiting for gateway: %w", err)
 		}
 	} else if p.Channel == "" {
 		// No channel — just start the gateway with model-only config.
@@ -655,6 +669,169 @@ func injectCodexAuthProfile(cli *docker.Client, containerID, accessToken, refres
 	return dockerExecAs(cli, containerID, "node", []string{
 		"bash", "-c", fmt.Sprintf("cat > %s << 'CLAWFLEET_EOF'\n%s\nCLAWFLEET_EOF", authPath, string(data)),
 	})
+}
+
+// HermesConfigureParams holds Hermes-specific configuration parameters.
+type HermesConfigureParams struct {
+	ContainerID  string
+	Provider     string // e.g. "openai", "openai-codex", "anthropic"
+	APIKey       string // API key or OAuth access token
+	Model        string // e.g. "gpt-5.4-mini"
+	Channel      string // e.g. "discord", "telegram"
+	ChannelToken string // bot token
+	// OAuth fields (openai-codex)
+	OAuthRefresh   string
+	OAuthExpires   int64
+	OAuthAccountID string
+}
+
+// ConfigureHermes configures a Hermes Agent instance by writing .env and config.yaml
+// inside the container, then restarting the gateway process.
+func ConfigureHermes(cli *docker.Client, p HermesConfigureParams) error {
+	const envPath = "/opt/data/.env"
+	const configPath = "/opt/data/config.yaml"
+
+	// Build .env additions.
+	// Hermes uses provider-specific env vars (not OPENAI_API_KEY for everything).
+	// OpenAI has no native provider in Hermes — we use model.api_key in config.yaml instead.
+	// Provider may be empty for channel-only configuration.
+	var envLines []string
+
+	switch p.Provider {
+	case "openai-codex":
+		return fmt.Errorf("openai-codex (ChatGPT subscription) is not supported for Hermes instances. Please use a standard OpenAI API key model instead")
+	case "": // Channel-only config — skip model credentials
+	case "openai":
+		// OpenAI has no native Hermes provider. API key is set via model.api_key below.
+	case "anthropic":
+		envLines = append(envLines, fmt.Sprintf("ANTHROPIC_API_KEY=%s", p.APIKey))
+	case "google":
+		envLines = append(envLines, fmt.Sprintf("GEMINI_API_KEY=%s", p.APIKey))
+	case "deepseek":
+		envLines = append(envLines, fmt.Sprintf("DEEPSEEK_API_KEY=%s", p.APIKey))
+	}
+
+	// Channel credentials
+	if p.Channel == "discord" && p.ChannelToken != "" {
+		envLines = append(envLines, fmt.Sprintf("DISCORD_BOT_TOKEN=%s", p.ChannelToken))
+	} else if p.Channel == "telegram" && p.ChannelToken != "" {
+		envLines = append(envLines, fmt.Sprintf("TELEGRAM_BOT_TOKEN=%s", p.ChannelToken))
+	} else if p.Channel == "slack" && p.ChannelToken != "" {
+		envLines = append(envLines, fmt.Sprintf("SLACK_BOT_TOKEN=%s", p.ChannelToken))
+	}
+
+	// Allow all users by default (ClawFleet manages access at the container level)
+	envLines = append(envLines, "GATEWAY_ALLOW_ALL_USERS=true")
+
+	// Write .env additions: remove any previous ClawFleet block, then append fresh.
+	if len(envLines) > 0 {
+		// Remove old ClawFleet-injected block (everything from the marker to EOF).
+		_ = dockerExecAs(cli, p.ContainerID, "", []string{
+			"sed", "-i", "/^# Configured by ClawFleet$/,$d", envPath,
+		})
+		envBlock := "\n# Configured by ClawFleet\n" + strings.Join(envLines, "\n") + "\n"
+		if err := dockerExecAs(cli, p.ContainerID, "", []string{
+			"bash", "-c", fmt.Sprintf("cat >> %s << 'CLAWFLEET_EOF'\n%sCLAWFLEET_EOF", envPath, envBlock),
+		}); err != nil {
+			return fmt.Errorf("writing .env: %w", err)
+		}
+	}
+
+	// Set model in config.yaml via hermes CLI.
+	// Hermes provider mapping:
+	//   ClawFleet "openai"    → Hermes "openrouter" + model.base_url=api.openai.com + model.api_key
+	//   ClawFleet "anthropic" → Hermes "anthropic"  + ANTHROPIC_API_KEY env
+	//   ClawFleet "google"    → Hermes "gemini"     + GEMINI_API_KEY env
+	//   ClawFleet "deepseek"  → Hermes "deepseek"   + DEEPSEEK_API_KEY env
+	if p.Model != "" {
+		model := p.Model
+
+		var hermesProvider, baseURL, apiKey string
+		switch p.Provider {
+		case "openai":
+			// Hermes has no native "openai" provider. Use "custom" provider with
+			// direct API endpoint and key set in config.yaml. Verified working.
+			hermesProvider = "custom"
+			baseURL = "https://api.openai.com/v1"
+			apiKey = p.APIKey
+		case "anthropic":
+			hermesProvider = "anthropic"
+			if !strings.Contains(model, "/") {
+				model = "anthropic/" + model
+			}
+		case "google":
+			hermesProvider = "gemini"
+			if !strings.Contains(model, "/") {
+				model = "google/" + model
+			}
+		case "deepseek":
+			hermesProvider = "deepseek"
+			if !strings.Contains(model, "/") {
+				model = "deepseek/" + model
+			}
+		}
+
+		configCmds := []struct{ key, val string }{
+			{"model.default", model},
+			{"model.provider", hermesProvider},
+			{"model.base_url", baseURL},
+			{"model.api_key", apiKey},
+		}
+		for _, c := range configCmds {
+			if err := dockerExecAs(cli, p.ContainerID, "", []string{
+				"bash", "-c",
+				fmt.Sprintf("source /opt/hermes/.venv/bin/activate && hermes config set %s '%s'", c.key, c.val),
+			}); err != nil {
+				return fmt.Errorf("setting %s: %w", c.key, err)
+			}
+		}
+	}
+
+	// Enable the channel platform in config.yaml
+	if p.Channel != "" {
+		platform := p.Channel
+		if err := dockerExecAs(cli, p.ContainerID, "", []string{
+			"bash", "-c",
+			fmt.Sprintf("source /opt/hermes/.venv/bin/activate && hermes config set gateway.platforms.%s.enabled true", platform),
+		}); err != nil {
+			return fmt.Errorf("enabling %s platform: %w", platform, err)
+		}
+	}
+
+	// Channel-only mode: if no model was configured by ClawFleet but the user
+	// has Codex credentials from the Hermes Dashboard, auto-set the model provider
+	// so the bot can actually respond. Without this, Codex login stores credentials
+	// but model.provider stays "auto" and Hermes fails to find a provider.
+	if p.Provider == "" {
+		authCheck, _ := dockerExecOutputAs(cli, p.ContainerID, "", []string{
+			"bash", "-c",
+			`python3 -c "import json; d=json.load(open('/opt/data/auth.json')); print('codex' if d.get('credential_pool',{}).get('openai-codex') else 'none')"`,
+		})
+		if strings.TrimSpace(authCheck) == "codex" {
+			// Codex credentials exist — set provider and a default model.
+			for _, c := range []struct{ key, val string }{
+				{"model.provider", "openai-codex"},
+				{"model.default", "gpt-5.4-mini"},
+			} {
+				_ = dockerExecAs(cli, p.ContainerID, "", []string{
+					"bash", "-c",
+					fmt.Sprintf("source /opt/hermes/.venv/bin/activate && hermes config set %s '%s'", c.key, c.val),
+				})
+			}
+		}
+	}
+
+	// Restart the container to pick up new .env and config changes.
+	// The entrypoint will re-launch both dashboard and gateway.
+	if err := cli.RestartContainer(p.ContainerID, 10); err != nil {
+		return fmt.Errorf("restarting container: %w", err)
+	}
+
+	// Wait for gateway to come up (Hermes gateway doesn't have a /health endpoint
+	// on a known port from outside, so we just wait a fixed duration)
+	time.Sleep(15 * time.Second)
+
+	return nil
 }
 
 // waitForGateway polls the gateway health endpoint until it responds or timeout.

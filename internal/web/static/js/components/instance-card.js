@@ -2,8 +2,14 @@ import { html } from '../lib.js';
 import { useLang } from '../i18n.js';
 import { formatBytes } from '../utils.js';
 
-export function InstanceCard({ instance, stats, pending, selected, onToggleSelect, onStart, onStop, onDestroy, onDesktop, onConsole, onRestartBot, onConfigure, onSnapshot, onSkills, onHermesDashboard }) {
+export function InstanceCard({ instance, stats, pending, selected, onToggleSelect, onStart, onStop, onDestroy, onDesktop, onConsole, onRestartBot, onConfigure, onSnapshot, onSkills, onHermesDashboard, addToast }) {
   const { t } = useLang();
+  const copyShellCmd = () => {
+    navigator.clipboard.writeText(`clawfleet shell ${instance.name}`).then(
+      () => addToast && addToast(t('card.shellCopied', instance.name), 'success'),
+      () => {}
+    );
+  };
   const isRunning = instance.status === 'running';
   const isHermes = instance.runtime_type === 'hermes';
   const cpu = stats?.cpu_percent ?? 0;
@@ -123,7 +129,11 @@ export function InstanceCard({ instance, stats, pending, selected, onToggleSelec
           `}
           ${isHermes && html`
             <button class="btn btn-sm btn-desktop" onClick=${onHermesDashboard} disabled=${busy}>${t('card.hermesDashboard')}</button>
+            <button class="btn btn-sm btn-configure" onClick=${onConfigure} disabled=${busy}>
+              ${pending === 'configuring' ? t('action.configuring') : t('card.configure')}
+            </button>
           `}
+          ${isHermes && html`<button class="btn btn-sm btn-configure" onClick=${copyShellCmd}>${t('card.shell')}</button>`}
           <button class="btn btn-sm btn-warning" onClick=${onStop} disabled=${busy}>
             ${pending === 'stopping' ? t('action.stopping') : t('card.suspend')}
           </button>

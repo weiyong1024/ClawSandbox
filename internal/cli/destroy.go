@@ -21,9 +21,9 @@ var (
 
 var destroyCmd = &cobra.Command{
 	Use:     "destroy <name|all>",
-	Short:   "Destroy a claw instance (data is kept by default)",
+	Short:   "Destroy an instance (data is kept by default)",
 	Args:    cobra.ExactArgs(1),
-	Example: "  clawfleet destroy claw-1\n  clawfleet destroy all --purge\n  clawfleet destroy claw-1 -f --purge",
+	Example: "  clawfleet destroy openclaw-1\n  clawfleet destroy all --purge\n  clawfleet destroy hermes-1 -f --purge",
 	RunE:    runDestroy,
 }
 

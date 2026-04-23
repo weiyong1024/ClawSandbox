@@ -50,7 +50,7 @@ clean:
 	rm -rf $(BUILD_DIR)
 
 reset:
-	@echo "==> Destroying all claw instances..."
+	@echo "==> Destroying all instances..."
 	@if [ -f $(BUILD_DIR)/$(BINARY) ]; then \
 		echo y | $(BUILD_DIR)/$(BINARY) destroy --purge all 2>/dev/null || true; \
 		$(BUILD_DIR)/$(BINARY) dashboard stop 2>/dev/null || true; \

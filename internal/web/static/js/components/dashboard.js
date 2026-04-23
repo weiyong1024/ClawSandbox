@@ -13,7 +13,7 @@ function SkeletonCard() {
   `;
 }
 
-export function Dashboard({ instances, stats, loading, pending, selected, onToggleSelect, onSelectAll, onBatchDestroy, onStart, onStop, onDestroy, onDesktop, onConsole, onRestartBot, onConfigure, onSnapshot, onSkills, onHermesDashboard, onCreateClick }) {
+export function Dashboard({ instances, stats, loading, pending, selected, onToggleSelect, onSelectAll, onBatchDestroy, onStart, onStop, onDestroy, onDesktop, onConsole, onRestartBot, onConfigure, onSnapshot, onSkills, onHermesDashboard, onCreateClick, addToast }) {
   const { t } = useLang();
 
   if (loading) {
@@ -84,6 +84,7 @@ export function Dashboard({ instances, stats, loading, pending, selected, onTogg
               onSnapshot=${() => onSnapshot(inst.name)}
               onSkills=${() => onSkills(inst.name)}
               onHermesDashboard=${() => onHermesDashboard(inst.name)}
+              addToast=${addToast}
             />
           `;
           return html`

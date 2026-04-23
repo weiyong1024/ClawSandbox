@@ -16,7 +16,7 @@ const (
 	DefaultGatewayBase  = 18789
 	DefaultMemoryLimit  = "4g"
 	DefaultCPULimit     = 2.0
-	DefaultNamingPrefix = "claw"
+	DefaultNamingPrefix = "claw" // legacy; new instances use runtime-prefixed names
 
 	DefaultHermesImageName = "nousresearch/hermes-agent"
 	DefaultHermesImageTag  = "latest"
@@ -55,6 +55,15 @@ type NamingConfig struct {
 type HermesConfig struct {
 	ImageName string `yaml:"image_name"`
 	ImageTag  string `yaml:"image_tag"`
+}
+
+// NamingPrefix returns the instance name prefix for the given runtime type.
+// New instances are named "openclaw-N" or "hermes-N" based on runtime.
+func NamingPrefix(runtimeType string) string {
+	if runtimeType == "hermes" {
+		return "hermes"
+	}
+	return "openclaw"
 }
 
 func (c *Config) ImageRef() string {

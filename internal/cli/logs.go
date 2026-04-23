@@ -14,9 +14,9 @@ var logsFollow bool
 
 var logsCmd = &cobra.Command{
 	Use:     "logs <name>",
-	Short:   "View container logs for a claw instance",
+	Short:   "View container logs for an instance",
 	Args:    cobra.ExactArgs(1),
-	Example: "  clawfleet logs claw-1\n  clawfleet logs claw-1 -f",
+	Example: "  clawfleet logs hermes-1\n  clawfleet logs openclaw-1 -f",
 	RunE:    runLogs,
 }
 

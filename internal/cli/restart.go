@@ -11,9 +11,9 @@ import (
 
 var restartCmd = &cobra.Command{
 	Use:     "restart <name|all>",
-	Short:   "Restart a claw instance (stop then start)",
+	Short:   "Restart an instance (stop then start)",
 	Args:    cobra.ExactArgs(1),
-	Example: "  clawfleet restart claw-1\n  clawfleet restart all",
+	Example: "  clawfleet restart openclaw-1\n  clawfleet restart all",
 	RunE:    runRestart,
 }
 

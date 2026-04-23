@@ -20,7 +20,7 @@ var shellCmd = &cobra.Command{
 For Hermes instances, this launches the Hermes interactive CLI (TUI).
 For OpenClaw instances, this opens a bash shell.`,
 	Args:    cobra.ExactArgs(1),
-	Example: "  clawfleet shell claw-1",
+	Example: "  clawfleet shell hermes-1",
 	RunE:    runShell,
 }
 

@@ -26,7 +26,9 @@ const messages = {
     'card.resume':           '▶ Resume',
     'card.destroy':          '🗑 Destroy',
     'card.unconfigured':     'Not configured',
-    'card.hermesUnconfigured': 'Configure in Dashboard →',
+    'card.hermesUnconfigured': 'Not configured',
+    'card.shell':            '📋 Shell',
+    'card.shellCopied':      (name) => `Copied: clawfleet shell ${name}`,
     'status.suspended':      'suspended',
 
     'create.title':          'Create Instances',
@@ -255,7 +257,9 @@ const messages = {
     'card.resume':           '▶ 复位',
     'card.destroy':          '🗑 销毁',
     'card.unconfigured':     '未配置',
-    'card.hermesUnconfigured': '在 Dashboard 中配置 →',
+    'card.hermesUnconfigured': '未配置',
+    'card.shell':            '📋 Shell',
+    'card.shellCopied':      (name) => `已复制: clawfleet shell ${name}`,
     'status.suspended':      '挂起中',
 
     'create.title':          '创建实例',

@@ -11,9 +11,9 @@ import (
 
 var startCmd = &cobra.Command{
 	Use:     "start <name|all>",
-	Short:   "Start a stopped claw instance",
+	Short:   "Start a stopped instance",
 	Args:    cobra.ExactArgs(1),
-	Example: "  clawfleet start claw-1\n  clawfleet start all",
+	Example: "  clawfleet start openclaw-1\n  clawfleet start all",
 	RunE:    runStart,
 }
 

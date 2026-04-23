@@ -45,32 +45,32 @@ func (s *Server) handleConfigureInstance(w http.ResponseWriter, r *http.Request)
 	}
 
 	var assetsStore *state.AssetStore
-	if req.ModelAssetID != "" {
-		// Standard mode with asset IDs: resolve them to actual config values.
+	if req.ModelAssetID != "" || req.ChannelAssetID != "" {
+		// Resolve asset IDs to actual config values.
 		assets, err := s.loadAssets()
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 
-		model := assets.GetModel(req.ModelAssetID)
-		if model == nil {
-			writeError(w, http.StatusBadRequest, "model asset not found")
-			return
-		}
-		if !model.Validated {
-			writeError(w, http.StatusBadRequest, "model asset has not been validated")
-			return
+		if req.ModelAssetID != "" {
+			model := assets.GetModel(req.ModelAssetID)
+			if model == nil {
+				writeError(w, http.StatusBadRequest, "model asset not found")
+				return
+			}
+			if !model.Validated {
+				writeError(w, http.StatusBadRequest, "model asset has not been validated")
+				return
+			}
+			req.Provider = model.Provider
+			req.APIKey = model.APIKey
+			req.Model = model.Model
+			req.OAuthRefresh = model.OAuthRefresh
+			req.OAuthExpires = model.OAuthExpires
+			req.OAuthAccountID = model.OAuthAccountID
 		}
 
-		req.Provider = model.Provider
-		req.APIKey = model.APIKey
-		req.Model = model.Model
-		req.OAuthRefresh = model.OAuthRefresh
-		req.OAuthExpires = model.OAuthExpires
-		req.OAuthAccountID = model.OAuthAccountID
-
-		// Handle channel asset
 		if req.ChannelAssetID != "" {
 			channel := assets.GetChannel(req.ChannelAssetID)
 			if channel == nil {
@@ -90,7 +90,27 @@ func (s *Server) handleConfigureInstance(w http.ResponseWriter, r *http.Request)
 		assetsStore = assets
 	}
 
-	if req.Provider == "" || req.APIKey == "" {
+	// For OpenClaw, model (provider + api_key) is required.
+	// For Hermes, model is optional — user may configure only a channel
+	// (model may already be set via the Hermes native Dashboard).
+	if req.ModelAssetID == "" && req.Provider == "" {
+		// No model asset and no direct provider — check if this is a Hermes channel-only config
+		store0, err := s.loadStore()
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		inst0 := store0.Get(name)
+		if inst0 == nil || !inst0.IsHermes() {
+			writeError(w, http.StatusBadRequest, "provider and api_key are required")
+			return
+		}
+		// Hermes channel-only: must have a channel
+		if req.ChannelAssetID == "" && req.Channel == "" {
+			writeError(w, http.StatusBadRequest, "either model or channel is required")
+			return
+		}
+	} else if req.Provider == "" || req.APIKey == "" {
 		writeError(w, http.StatusBadRequest, "provider and api_key are required")
 		return
 	}
@@ -117,13 +137,7 @@ func (s *Server) handleConfigureInstance(w http.ResponseWriter, r *http.Request)
 		writeError(w, http.StatusNotFound, fmt.Sprintf("instance %s not found", name))
 		return
 	}
-	if inst.IsHermes() {
-		writeError(w, http.StatusBadRequest,
-			"Not available for Hermes instances. Use the Hermes Dashboard to configure.")
-		return
-	}
-
-	// Ensure instance is running
+	// Ensure instance is running before configuration.
 	status, _, _ := container.Status(s.docker, inst.ContainerID)
 	if status != "running" {
 		if err := container.Start(s.docker, inst.ContainerID); err != nil {
@@ -134,53 +148,87 @@ func (s *Server) handleConfigureInstance(w http.ResponseWriter, r *http.Request)
 		_ = store.Save()
 	}
 
-	// Resolve bot display name from the channel platform for text @mention detection.
-	// Lark/Feishu doesn't support programmatic bot name resolution via API,
-	// so we skip it — text @mention detection is not needed for Feishu
-	// (it uses native platform mentions).
-	var botName string
-	if req.Channel != "" && req.Channel != "lark" && req.ChannelToken != "" {
-		botName = resolveBotName(req.Channel, req.ChannelToken)
-	}
+	if inst.IsHermes() {
+		// Hermes supports discord, telegram, and slack channels.
+		if req.Channel != "" && req.Channel != "discord" && req.Channel != "telegram" && req.Channel != "slack" {
+			writeError(w, http.StatusBadRequest, fmt.Sprintf("Hermes does not support %s channel", req.Channel))
+			return
+		}
 
-	// Resolve character asset into SoulParams so it's injected before gateway starts.
-	// Include roster (teammates) so the bot knows about its fleet.
-	var soul *container.SoulParams
-	if req.CharacterAssetID != "" {
-		assets, loadErr := s.loadAssets()
-		if loadErr == nil {
-			if ch := assets.GetCharacter(req.CharacterAssetID); ch != nil {
-				soul = &container.SoulParams{
-					Name:       ch.Name,
-					Bio:        ch.Bio,
-					Lore:       ch.Lore,
-					Style:      ch.Style,
-					Topics:     ch.Topics,
-					Adjectives: ch.Adjectives,
-					Teammates:  buildRoster(name, store, assets),
+		if err := container.ConfigureHermes(s.docker, container.HermesConfigureParams{
+			ContainerID:    inst.ContainerID,
+			Provider:       req.Provider,
+			APIKey:         req.APIKey,
+			Model:          req.Model,
+			Channel:        req.Channel,
+			ChannelToken:   req.ChannelToken,
+			OAuthRefresh:   req.OAuthRefresh,
+			OAuthExpires:   req.OAuthExpires,
+			OAuthAccountID: req.OAuthAccountID,
+		}); err != nil {
+			writeError(w, http.StatusInternalServerError, fmt.Sprintf("configure failed: %v", err))
+			return
+		}
+	} else {
+		// OpenClaw configuration path.
+
+		// Resolve bot display name from the channel platform for text @mention detection.
+		// Lark/Feishu doesn't support programmatic bot name resolution via API,
+		// so we skip it — text @mention detection is not needed for Feishu
+		// (it uses native platform mentions).
+		var botName string
+		if req.Channel != "" && req.Channel != "lark" && req.ChannelToken != "" {
+			botName = resolveBotName(req.Channel, req.ChannelToken)
+		}
+
+		// Resolve character asset into SoulParams so it's injected before gateway starts.
+		// Include roster (teammates) so the bot knows about its fleet.
+		var soul *container.SoulParams
+		if req.CharacterAssetID != "" {
+			assets, loadErr := s.loadAssets()
+			if loadErr == nil {
+				if ch := assets.GetCharacter(req.CharacterAssetID); ch != nil {
+					soul = &container.SoulParams{
+						Name:       ch.Name,
+						Bio:        ch.Bio,
+						Lore:       ch.Lore,
+						Style:      ch.Style,
+						Topics:     ch.Topics,
+						Adjectives: ch.Adjectives,
+						Teammates:  buildRoster(name, store, assets),
+					}
 				}
 			}
 		}
-	}
 
-	if err := container.Configure(s.docker, container.ConfigureParams{
-		ContainerID:     inst.ContainerID,
-		Provider:        req.Provider,
-		APIKey:          req.APIKey,
-		Model:           req.Model,
-		Channel:         req.Channel,
-		ChannelToken:    req.ChannelToken,
-		ChannelAppToken: req.ChannelAppToken,
-		AppID:           req.AppID,
-		AppSecret:       req.AppSecret,
-		BotName:         botName,
-		Soul:            soul,
-		OAuthRefresh:    req.OAuthRefresh,
-		OAuthExpires:    req.OAuthExpires,
-		OAuthAccountID:  req.OAuthAccountID,
-	}); err != nil {
-		writeError(w, http.StatusInternalServerError, fmt.Sprintf("configure failed: %v", err))
-		return
+		if err := container.Configure(s.docker, container.ConfigureParams{
+			ContainerID:     inst.ContainerID,
+			Provider:        req.Provider,
+			APIKey:          req.APIKey,
+			Model:           req.Model,
+			Channel:         req.Channel,
+			ChannelToken:    req.ChannelToken,
+			ChannelAppToken: req.ChannelAppToken,
+			AppID:           req.AppID,
+			AppSecret:       req.AppSecret,
+			BotName:         botName,
+			Soul:            soul,
+			OAuthRefresh:    req.OAuthRefresh,
+			OAuthExpires:    req.OAuthExpires,
+			OAuthAccountID:  req.OAuthAccountID,
+		}); err != nil {
+			writeError(w, http.StatusInternalServerError, fmt.Sprintf("configure failed: %v", err))
+			return
+		}
+
+		// Refresh teammates' SOUL.md so their roster includes this instance.
+		if req.CharacterAssetID != "" {
+			if refreshAssets, err := s.loadAssets(); err == nil {
+				if refreshStore, err := s.loadStore(); err == nil {
+					s.refreshTeammateRosters(name, refreshStore, refreshAssets)
+				}
+			}
+		}
 	}
 
 	// Persist which asset IDs were used so the card and dialog can show them.
@@ -195,15 +243,6 @@ func (s *Server) handleConfigureInstance(w http.ResponseWriter, r *http.Request)
 		if err := assetsStore.SaveAssets(); err != nil {
 			writeError(w, http.StatusInternalServerError, err.Error())
 			return
-		}
-	}
-
-	// Refresh teammates' SOUL.md so their roster includes this instance.
-	if req.CharacterAssetID != "" {
-		if refreshAssets, err := s.loadAssets(); err == nil {
-			if refreshStore, err := s.loadStore(); err == nil {
-				s.refreshTeammateRosters(name, refreshStore, refreshAssets)
-			}
 		}
 	}
 

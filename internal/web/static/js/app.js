@@ -293,6 +293,7 @@ function App() {
           onSkills=${(name) => setSkillsName(name)}
           onHermesDashboard=${onHermesDashboard}
           onCreateClick=${() => setShowCreate(true)}
+          addToast=${addToast}
         />
       `;
       break;
@@ -312,6 +313,7 @@ function App() {
     ${configureName && html`
       <${ConfigureDialog}
         instanceName=${configureName}
+        runtimeType=${(instances.find(i => i.name === configureName) || {}).runtime_type || 'openclaw'}
         currentModelAssetId=${(instances.find(i => i.name === configureName) || {}).model_asset_id || ''}
         currentCharacterAssetId=${(instances.find(i => i.name === configureName) || {}).character_asset_id || ''}
         onClose=${() => setConfigureName(null)}

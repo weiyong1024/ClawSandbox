@@ -21,7 +21,7 @@ var fromSnapshotFlag string
 
 var createCmd = &cobra.Command{
 	Use:     "create <N>",
-	Short:   "Create N isolated OpenClaw instances",
+	Short:   "Create N isolated instances",
 	Args:    cobra.ExactArgs(1),
 	Example: "  clawfleet create 3\n  clawfleet create 1\n  clawfleet create 3 --pull",
 	RunE:    runCreate,
@@ -91,7 +91,7 @@ func runCreate(cmd *cobra.Command, args []string) error {
 	created := 0
 	firstName := ""
 	for i := 0; i < n; i++ {
-		name := store.NextName(cfg.Naming.Prefix)
+		name := store.NextName(config.NamingPrefix("openclaw"))
 		if firstName == "" {
 			firstName = name
 		}

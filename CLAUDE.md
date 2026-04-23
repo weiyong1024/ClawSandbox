@@ -148,12 +148,28 @@ When researching an external technology (framework, tool, protocol, or platform)
 
 The output of any tech research should be a clear recommendation: compete / integrate / borrow / ignore — with reasoning.
 
-### Verify Before Handoff
-- After fixing a bug or implementing a feature that affects API/server behavior, smoke-test the change yourself (e.g. `curl` requests to the local server, `docker exec` commands) before asking the user to verify on the UI.
+### External Component Spec-First
+ClawFleet is an infrastructure-layer product. Every time we integrate a new runtime (e.g. Hermes Agent) or depend on a new external tool, we must first build a thorough understanding of that component's internals and document it in a spec — before writing any integration code:
+
+1. **Read the source code** of the subsystem being integrated (auth, config, provider resolution, credential storage). The source is always available — inside containers, in repos, or in installed packages.
+2. **Map the complete data flow**: where credentials are read, how providers are resolved, what env vars are checked, what config keys are honored, and in what priority order.
+3. **Document findings in the spec** with concrete details: exact provider names, env var names, config paths, resolution fallback chains. No assumptions carried over from other systems.
+4. **Validate manually in the target environment** (e.g. `docker exec` into the container, set config, test the API call) before writing any Go/JS code.
+
+Skipping this step and guessing from analogies with other systems (e.g. assuming Hermes works like OpenClaw) leads to repeated debugging cycles that waste engineering time and user patience.
+
+### Self-Test to Completion Before Handoff
+The user's role is to set goals, review designs, and do final acceptance testing — not to participate in debug iterations. The correct human-in-the-loop workflow is:
+
+1. **Set a clear success criterion** (e.g. "DM the bot, get an LLM-generated reply").
+2. **Implement and self-test end-to-end** until that criterion is met. Self-testing means: build → configure via API → verify config in container → trigger the exact user flow (send a message, check logs for success) → confirm the full chain works.
+3. **Only then present to the user for acceptance**. If the user finds a bug, fix it and self-test the fix before asking them to re-test.
+
+Never ask the user to "try it and see" as a substitute for your own testing. Every handoff to the user must be a confident "this works, please verify" — not "I think this might work, let me know".
 
 ## Growth Strategy Sync
 
-<!-- strategy-bulletin-version: 2 -->
+<!-- strategy-bulletin-version: 8 -->
 
 All Marketer-Sessions (growth, content, distribution) MUST re-read `growth/STRATEGY_BULLETIN.md` before every action cycle (writing content, publishing, making distribution decisions). This file contains the live strategy, target user definition, active decisions, and constraints. It is updated by the lead Marketer-Session; the version comment above is bumped on each update to trigger CLAUDE.md change notifications to all running sessions.
 

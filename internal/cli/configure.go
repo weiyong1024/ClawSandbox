@@ -13,11 +13,11 @@ var configureCmd = &cobra.Command{
 	Use:   "configure <name>",
 	Short: "Configure an OpenClaw instance with LLM provider and chat channel",
 	Args:  cobra.ExactArgs(1),
-	Example: `  clawfleet configure claw-1 \
+	Example: `  clawfleet configure openclaw-1 \
     --provider anthropic --api-key sk-ant-... --model claude-sonnet-4-6 \
     --channel telegram --channel-token 123456:ABC...
 
-  clawfleet configure claw-1 \
+  clawfleet configure openclaw-1 \
     --provider openai --api-key sk-... --model gpt-5.4 \
     --channel slack --channel-token xoxb-... --channel-app-token xapp-...`,
 	RunE: runConfigure,

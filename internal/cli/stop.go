@@ -11,9 +11,9 @@ import (
 
 var stopCmd = &cobra.Command{
 	Use:     "stop <name|all>",
-	Short:   "Stop a running claw instance",
+	Short:   "Stop a running instance",
 	Args:    cobra.ExactArgs(1),
-	Example: "  clawfleet stop claw-1\n  clawfleet stop all",
+	Example: "  clawfleet stop hermes-1\n  clawfleet stop all",
 	RunE:    runStop,
 }
 

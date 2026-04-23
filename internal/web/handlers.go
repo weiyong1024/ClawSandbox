@@ -174,7 +174,7 @@ func (s *Server) handleCreateInstances(w http.ResponseWriter, r *http.Request) {
 
 	created := make([]instanceResponse, 0, req.Count)
 	for i := 0; i < req.Count; i++ {
-		name := store.NextName(cfg.Naming.Prefix)
+		name := store.NextName(config.NamingPrefix(runtimeType))
 		usedPorts := store.UsedPorts()
 
 		novncPort, err := port.FindAvailable(cfg.Ports.NoVNCBase, usedPorts)

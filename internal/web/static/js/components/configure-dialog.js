@@ -2,7 +2,7 @@ import { html, useState, useEffect } from '../lib.js';
 import { useLang } from '../i18n.js';
 import { api } from '../api.js';
 
-export function ConfigureDialog({ instanceName, currentModelAssetId, currentCharacterAssetId, onClose, onConfigure }) {
+export function ConfigureDialog({ instanceName, runtimeType, currentModelAssetId, currentCharacterAssetId, onClose, onConfigure }) {
   const { t } = useLang();
   const [models, setModels] = useState([]);
   const [channels, setChannels] = useState([]);
@@ -37,20 +37,24 @@ export function ConfigureDialog({ instanceName, currentModelAssetId, currentChar
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!selectedModel) return;
+    if (!isHermes && !selectedModel) return;
 
     setConfiguring(true);
     await onConfigure(instanceName, {
-      model_asset_id: selectedModel,
+      model_asset_id: selectedModel || undefined,
       channel_asset_id: selectedChannel || undefined,
       character_asset_id: selectedCharacter || undefined,
     });
     setConfiguring(false);
   };
 
-  // Models are shared — show all validated models
-  const availableModels = models.filter(m => m.validated);
-  const availableChannels = channels.filter(c => c.validated && (!c.used_by || c.used_by === instanceName));
+  const isHermes = runtimeType === 'hermes';
+  // Models are shared — show all validated models.
+  // Hermes doesn't support openai-codex (requires interactive auth).
+  const availableModels = models.filter(m => m.validated && (!isHermes || m.provider !== 'openai-codex'));
+  // Hermes only supports discord, telegram, slack channels
+  const hermesChannels = ['discord', 'telegram', 'slack'];
+  const availableChannels = channels.filter(c => c.validated && (!c.used_by || c.used_by === instanceName) && (!isHermes || hermesChannels.includes(c.channel)));
 
   const providerLabel = (p) => {
     const map = { anthropic: 'Anthropic', openai: 'OpenAI', google: 'Google', deepseek: 'DeepSeek' };
@@ -89,6 +93,7 @@ export function ConfigureDialog({ instanceName, currentModelAssetId, currentChar
                 </div>
               `}
 
+              ${!isHermes && html`
               <div class="form-label" style="margin-top:16px">${t('configure.characterConfig')}</div>
               <div class="config-select-list">
                 <label class="config-select-item ${!selectedCharacter ? 'config-select-active' : ''}">
@@ -111,6 +116,7 @@ export function ConfigureDialog({ instanceName, currentModelAssetId, currentChar
                   </label>
                 `)}
               </div>
+              `}
 
               <div class="form-label" style="margin-top:16px">${t('configure.channelConfig')}</div>
               <div class="config-select-list">
@@ -139,7 +145,7 @@ export function ConfigureDialog({ instanceName, currentModelAssetId, currentChar
             <div class="dialog-footer">
               ${configuring && html`<span class="form-hint" style="margin-right:auto">${t('configure.timeHint')}</span>`}
               <button type="button" class="btn btn-ghost" onClick=${onClose} disabled=${configuring}>${t('configure.cancel')}</button>
-              <button type="submit" class="btn btn-primary" disabled=${configuring || !selectedModel}>
+              <button type="submit" class="btn btn-primary" disabled=${configuring || (!isHermes && !selectedModel)}>
                 ${configuring ? t('configure.configuring') : t('configure.submit')}
               </button>
             </div>
