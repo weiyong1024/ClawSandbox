@@ -148,6 +148,15 @@ func Status(cli *docker.Client, containerID string) (string, time.Time, error) {
 	}
 }
 
+// ImageOf returns the image reference (Config.Image) the container was created with.
+func ImageOf(cli *docker.Client, containerID string) (string, error) {
+	c, err := cli.InspectContainerWithOptions(docker.InspectContainerOptions{ID: containerID})
+	if err != nil {
+		return "", fmt.Errorf("inspecting container %s: %w", containerID, err)
+	}
+	return c.Config.Image, nil
+}
+
 func Logs(cli *docker.Client, containerID string, follow bool, out io.Writer) error {
 	return cli.Logs(docker.LogsOptions{
 		Container:    containerID,

@@ -48,6 +48,8 @@ func (s *Server) loadStore() (*state.Store, error) {
 
 // ListenAndServe starts the HTTP server and blocks until interrupted.
 func (s *Server) ListenAndServe() error {
+	s.runMigrations()
+
 	mux := http.NewServeMux()
 	s.registerRoutes(mux)
 

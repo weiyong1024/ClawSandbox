@@ -135,6 +135,18 @@ func (s *Store) SetStatus(name, status string) {
 	}
 }
 
+// SetRuntimeType updates the runtime type of the named instance.
+func (s *Store) SetRuntimeType(name, runtimeType string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for _, inst := range s.instances {
+		if inst.Name == name {
+			inst.RuntimeType = runtimeType
+			return
+		}
+	}
+}
+
 // SetConfig stores the asset IDs used to configure the named instance.
 func (s *Store) SetConfig(name, modelAssetID, channelAssetID, characterAssetID string) {
 	s.mu.Lock()
