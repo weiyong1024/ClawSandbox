@@ -7,7 +7,7 @@ const MODEL_PRESETS = {
   openai: ['gpt-5.4', 'o3', 'gpt-5-mini'],
   'openai-codex': ['gpt-5.4', 'o3', 'gpt-5-mini'],
   google: ['gemini-3.1-pro-preview', 'gemini-3-flash-preview', 'gemini-2.5-pro'],
-  deepseek: ['deepseek-chat', 'deepseek-reasoner'],
+  deepseek: ['deepseek-v4-pro', 'deepseek-v4-flash', 'deepseek-chat', 'deepseek-reasoner'],
 };
 
 export function ModelAssetDialog({ model, onClose, onSave, addToast }) {
@@ -42,7 +42,7 @@ export function ModelAssetDialog({ model, onClose, onSave, addToast }) {
     openai: 'e.g. GPT-5.4 Production',
     'openai-codex': 'e.g. ChatGPT GPT-5.4',
     google: 'e.g. Google AI Studio Gemini',
-    deepseek: 'e.g. DeepSeek Chat',
+    deepseek: 'e.g. DeepSeek V4 Pro',
   };
 
   const handleProviderChange = (newProvider) => {
